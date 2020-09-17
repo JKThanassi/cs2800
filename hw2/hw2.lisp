@@ -1,3 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 
 #| 
   - These commands are simplifying your interactions with ACL2s
@@ -5,7 +70,7 @@
   - Do not remove them.
 
   - To learn more about what they do, see Ch2 found on the course
-	readings page
+        readings page
 |#
 
 (set-defunc-termination-strictp nil)
@@ -41,13 +106,9 @@
               (= (len (drop-last xs))
                  (- (len xs) 1))))
 
-
 ;;; 2. Define and test a function INSERT-RIGHT that takes two symbols
 ;;; and a true list and returns a new list with the second symbol
 ;;; inserted after each occurrence of the first symbol.
-
-(check= (insert-right 'x 'y '(x z z x y x)) '(x y z z x y y x y))
-
 
 #|
 
@@ -73,20 +134,35 @@ association list:
 ;;; 4. Define and test a procedure REMOVE-FIRST that takes a symbol
 ;;; and a true list and returns a new list with the first occurrence
 ;;; of the symbol removed.
+(definec REMOVE-FIRST (symb :all l :tl) :tl
+  (cond ((equal l nil) nil)
+        ((equal symb (car l)) (cdr l))
+        (t (cons (car l) (REMOVE-FIRST symb (cdr l))))))
 
-
+(check= (REMOVE-FIRST 'r '(a b r c)) '(a b c))
+(check= (REMOVE-FIRST 'r '(a b c)) '(a b c))
+(check= (REMOVE-FIRST 'ed '(ed ba by)) '(ba by))
+(check= (REMOVE-FIRST 'ed '(ba by ed)) '(ba by))
 
 ;;; 5. Define and test a procedure MIRROR that takes a
 ;;; CONS-constructed binary tree (like those we discussed in lecture)
 ;;; and recursively exchanges each CAR with its CDR.
+(definec MIRROR (tree :cons) :cons
+  (cond ((and (not (consp (car tree))) (not (consp (cdr tree))))
+         (cons (cdr tree) (car tree)))
+        ((not (consp (car tree))) (cons (MIRROR (cdr tree)) (car tree)))
+        ((not (consp (cdr tree))) (cons (cdr tree) (MIRROR (car tree))))
+        (t (cons (MIRROR (cdr tree)) (MIRROR (car tree))))))
 
-
-(check= (mirror '((g h (a . b) . (c . d)) . (e . f)))
-	((f . e) (((d . c) b . a) . h) . g))
+(check= (MIRROR '((g h (a . b) . (c . d)) . (e . f)))
+        '((f . e) (((d . c) b . a) . h) . g))
 
 ;;; 6. Define a function CONS-CELL-COUNT that counts the number of CONS
 ;;; cells (i.e. the number of pairs) in a given structure
-
+(definec CONS-CELL-COUNT (tree :all) :nat
+  (cond ((not (consp tree)) 0)
+        (t (+ 1 (CONS-CELL-COUNT (car tree)) (CONS-CELL-COUNT (cdr tree))))))
+ 
 (check= (cons-cell-count '()) 0)
 (check= (cons-cell-count '(a . b)) 1)
 (check= (cons-cell-count '(a b)) 2)
@@ -123,7 +199,7 @@ association list:
 ;;; one.
 
 (test? (implies (and (tlp l1) (tlp l2))
-		(= (len (zip-lists l1 l2)) (min (len l1) (len l2)))))
+                (= (len (zip-lists l1 l2)) (min (len l1) (len l2)))))
 
 
 ;;; 10. Write a function WALK-SYMBOL that takes a symbol x and an
@@ -147,9 +223,9 @@ association list:
 (check= (unzip-lists '((()))) '((()) ()))
 
 (test? (implies (lopp e)
-		(equal (let ((v (unzip-lists e)))
-			 (zip-lists (car v) (cdr v)))
-		       e)))
+                (equal (let ((v (unzip-lists e)))
+                         (zip-lists (car v) (cdr v)))
+                       e)))
 
 ;;; Part II Computational complexity with static & dynamic contract checking
 
