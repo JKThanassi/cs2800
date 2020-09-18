@@ -77,7 +77,43 @@
 (set-defunc-function-contract-strictp nil)
 (set-defunc-body-contracts-strictp nil)
 
+(definec walk-symbol (sym :symbol als :alist) :all
+  (let* 
+    (
+     (ret-assoc (assoc sym als))
+     (ret-car (car ret-assoc))
+     (ret-cdr (cdr ret-assoc)))
+    (cond 
+     ((eql ret-car nil) sym)
+     ((symbolp ret-cdr)
+      (walk-symbol ret-cdr als))
+      (t ret-cdr))
+  ))
+(check= (walk-symbol 'a '((a . 5))) 5)
+(check= (walk-symbol 'a '((b . c) (a . b))) 'c)
+(check= (walk-symbol 'a '((a . 5) (b . 6) (c . a))) 5)
+(check= (walk-symbol 'c '((a . 5) (b . (a . c)) (c . a))) 5)
+(check= (walk-symbol 'b '((a . 5) (b . ((c . a))) (c . a))) '((c . a)))
+(check= (walk-symbol 'd '((a . 5) (b . (1 2)) (c . a) (e . c) (d . e))) 5)
+(check= (walk-symbol 'd '((a . 5) (b . 6) (c . f) (e . c) (d . e))) 'f)
+(check= (walk-symbol 'q '((a . 5) (b . 6) (c . f) (e . c) (d . e))) 'q)
 
+
+(definec unzip-helper (lst :alist acc1 :true-list acc2 :true-list) :true-list
+  ( if 
+   (eql lst nil) (list (reverse acc1) (reverse acc2))
+   (unzip-helper (cdr lst) (cons (caar lst) acc1) (cons (cdar lst) acc2))))
+
+(definec unzip-lists (lst :alist) :true-list
+  (if (eq lst nil)
+    '(() ())
+    (unzip-helper (cdr lst) (list (caar lst)) (list (cdar lst)))
+    )
+  )
+
+(check= (unzip-lists'((1 . 6) (2 . 7) (3 . 8) (4 . 9) (5 . 10))) '((1 2 3 4 5) (6 7 8 9 10)))#|ACL2s-ToDo-Line|#
+
+(check= (unzip-lists '((()))) '((()) ()))
 ;; Part I: Defining naturally-recursive functions.
 
 #| 
@@ -222,9 +258,23 @@ association list:
 ;;; without duplicates, returns a sorted list of nats without
 ;;; duplicates containing the elements of both lists. 
 
-(defdata lon (listof nat))
+(defdata lol (listof :list))
+
+(definec unzip-helper (lst :list acc1 :list acc2 :list) :lol
+  (if (eq lst nil)
+    (cons acc1 acc2)
+    (let ((head (car lst)))
+      (unzip-helper (cdr lst) (cons acc1 (car head)) (cons acc2 (cdr head) ))
+    )))
+
+(definec unzip-lists (lst :list) :lol
+  (unzip-helper lst () ())
+  )
+
+  
 
 (check= (unzip-lists '((()))) '((()) ()))
+(check= (unzip-lists'((1 . 6) (2 . 7) (3 . 8) (4 . 9) (5 . 10))) '((1 2 3 4 5) (6 7 8 9 10)))
 
 (test? (implies (lopp e)
                 (equal (let ((v (unzip-lists e)))
