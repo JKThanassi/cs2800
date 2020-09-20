@@ -46,8 +46,8 @@
 ;;; and a true list and returns a new list with the second symbol
 ;;; inserted after each occurrence of the first symbol.
 
-(check= (insert-right 'x 'y '(x z z x y x)) '(x y z z x y y x y))
 
+(check= (insert-right 'x 'y '(x z z x y x)) '(x y z z x y y x y))
 
 #|
 
@@ -61,14 +61,33 @@ called an association list. An association list is a (true) list of
 pairs of associated values. For example, the following is an
 association list:
 
-((a . 5) (b . (1 2)) (c . a))
+((A . 5) (B . (1 2)) (C . A))
+
+BTW, you may find the built-in ALIST and ALISTP of use to you. 
  
 |# 
 
 ;;; 3. Write MY-ASSOC, your own implementation of the lisp ASSOC
 ;;; function. You should not use ASSOC anywhere in your definition. 
 
+(defdata maybe-pair (oneof nil cons))
 
+
+
+#| 
+
+The Lisp function REMOVE takes x, an element of the universe, and l, a
+list. REMOVE returns a list with, as the name implies, every occurence
+of x removed. This function does not "recur deeply", it only operates
+at the top level of the list. 
+
+> (remove 'x '(a (x y) b x c x d (x)))
+(A (X Y) B C D (X))
+
+You can try it at the REPL. In the followng problem, you should not
+use REMOVE.
+
+|# 
 
 ;;; 4. Define and test a procedure REMOVE-FIRST that takes a symbol
 ;;; and a true list and returns a new list with the first occurrence
@@ -81,11 +100,15 @@ association list:
 ;;; and recursively exchanges each CAR with its CDR.
 
 
+
+(check= (mirror 'a) 'a)
 (check= (mirror '((g h (a . b) . (c . d)) . (e . f)))
-	((f . e) (((d . c) b . a) . h) . g))
+	'((f . e) (((d . c) b . a) . h) . g))
 
 ;;; 6. Define a function CONS-CELL-COUNT that counts the number of CONS
 ;;; cells (i.e. the number of pairs) in a given structure
+
+
 
 (check= (cons-cell-count '()) 0)
 (check= (cons-cell-count '(a . b)) 1)
@@ -98,7 +121,7 @@ association list:
  numbers. E.g. 9 in this representation is '(t nil nil t). This is
  unambiguous because in our notation these numbers never end in nil.
 
-|# 
+|#
 
 (defdata pos-bb (oneof '(t) (cons t pos-bb) (cons nil pos-bb)))
 (defdata bb (oneof nil pos-bb))
@@ -107,7 +130,14 @@ association list:
 ;;; numbers and returns the nat to which it corresponds. You should
 ;;; solve this without changing the method's signature. Nor should you
 ;;; add an accumulator or auxilliary variable in a help method.
-   
+
+#| 
+
+ Here are some fascinating properties you might want to *prove* for
+ such lists
+
+|# 
+
 (test? (implies (pos-bbp x)
               (= (* 2 (bb-to-n x)) (bb-to-n (cons nil x)))))
 (check= (bb-to-n nil) 0)
@@ -132,11 +162,13 @@ association list:
 (check= (list-index-of 7 '(0 7 0 7)) 1)
 (check= (list-index-of 9 '(1 2 3 9)) 3)
 
+
 ;;; 9. Write a function ZIP-LISTS that takes two lists l1 and
 ;;; l2. ZIP-LISTS returns a list formed from pairs of elements taken
 ;;; from with the car coming from l1 and the cdr coming from l2. If
 ;;; the lists are of uneven length, then drop the tail of the longer
 ;;; one.
+
 
 (definec zip-lists (l1 :tl l2 :tl) :alist
   (if (not (or (lendp l1) (lendp l2)))
@@ -152,27 +184,45 @@ association list:
 		(= (len (zip-lists l1 l2)) (min (len l1) (len l2)))))
 
 
-;;; 10. Write a function WALK-SYMBOL that takes a symbol x and an
-;;; association list s. Your function should walk through s for the
-;;; value associated with x. If the associated value is a symbol, it
-;;; too must be walked in s. If x has no association, then WALK-SYMBOL
-;;; should return x. 
+#| 
+
+  We will do this one in program mode. Then, we will go back to logic
+  mode. The termination arguments for this are tricky! Really, it's
+  not the function that's tricky: as written, it's just /not/
+  guaranteed to terminate! Rather, what's tricky is describing the
+  subset of alists on which it *is* guaranteed to terminate.
+
+|#
+
+:program
+
+;;; 10. Write a function WALK-SYMBOL that takes either an atom (almost
+;;; always a symbol) and an association list s. Your function should
+;;; walk through s for the value associated with x. If the associated
+;;; value is a symbol, it too must be walked in s. If x has no
+;;; association, then WALK-SYMBOL should return x.
+
+
 
 (check= (walk-symbol 'a '((a . 5))) 5)
-(check= (walk-symbol 'a '((b . c) (a . b))) c)
+(check= (walk-symbol 'a '((b . c) (a . b))) 'c)
 (check= (walk-symbol 'a '((a . 5) (b . 6) (c . a))) 5)
 (check= (walk-symbol 'c '((a . 5) (b . (a . c)) (c . a))) 5)
-(check= (walk-symbol 'b '((a . 5) (b . ((c . a))) (c . a))) ((c . a)))
+(check= (walk-symbol 'b '((a . 5) (b . ((c . a))) (c . a))) '((c . a)))
 (check= (walk-symbol 'd '((a . 5) (b . (1 2)) (c . a) (e . c) (d . e))) 5)
-(check= (walk-symbol 'd '((a . 5) (b . 6) (c . f) (e . c) (d . e))) f)
+(check= (walk-symbol 'd '((a . 5) (b . 6) (c . f) (e . c) (d . e))) 'f)
 
-;;; 11. Write a function UNZIP-LISTS that, given two sorted lists of nats
-;;; without duplicates, returns a sorted list of nats without
-;;; duplicates containing the elements of both lists. 
+:logic
 
+;;; 11. Write a function UNZIP-LISTS that recursively deconstructs a
+;;; list of pairs and returns (as a pair) a list of the cars in order
+;;; followed by a list of the cdrs also in order.
+
+
+(check= (unzip-lists '((a . b) (c . d) (e . f))) '((a c e) . (b d f)))
 (check= (unzip-lists '((()))) '((()) ()))
 
-(test? (implies (lopp e)
+(test? (implies (alistp e)
 		(equal (let ((v (unzip-lists e)))
 			 (zip-lists (car v) (cdr v)))
 		       e)))
