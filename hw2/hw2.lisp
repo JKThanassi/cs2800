@@ -107,26 +107,6 @@ association list:
 ;;; numbers and returns the nat to which it corresponds. You should
 ;;; solve this without changing the method's signature. Nor should you
 ;;; add an accumulator or auxilliary variable in a help method.
-
-(definec find-value (n :tl) :nat
-  :ic (tlp n)
-  (cond ((not (in t n)) 0)
-        ((equal '(t) n) 1)
-        ((equal t (first n)) (+ (expt 2 (1- (len n))) (find-value (rest n))))
-        (t (find-value (rest n)))))
-
-(check= (find-value '(t)) 1)
-(check= (find-value '(t nil)) 2)
-(check= (find-value '(t t)) 3)
-(check= (find-value '(t t t)) 7)
-(check= (find-value '(t nil t nil)) 10)
-(check= (find-value '(t nil nil nil nil)) 16)
-
-(definec bb-to-n (a :bb) :nat
-  :ic (bbp a)
-  (cond
-   ((equal nil a) 0)
-   (t (find-value (reverse a)))))
    
 (test? (implies (pos-bbp x)
               (= (* 2 (bb-to-n x)) (bb-to-n (cons nil x)))))
@@ -159,7 +139,6 @@ association list:
 ;;; one.
 
 (definec zip-lists (l1 :tl l2 :tl) :alist
-  :ic (and (tlp l1) (tlp l2))
   (if (not (or (lendp l1) (lendp l2)))
     (cons (cons (first l1) (first l2)) (zip-lists (rest l1) (rest l2)))
     '()))
