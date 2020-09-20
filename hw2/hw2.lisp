@@ -158,7 +158,7 @@ association list:
 ;;; the lists are of uneven length, then drop the tail of the longer
 ;;; one.
 
-(definec zip-lists (l1 :tl l2 :tl) :tl
+(definec zip-lists (l1 :tl l2 :tl) :alist
   :ic (and (tlp l1) (tlp l2))
   (if (not (or (lendp l1) (lendp l2)))
     (cons (cons (first l1) (first l2)) (zip-lists (rest l1) (rest l2)))
