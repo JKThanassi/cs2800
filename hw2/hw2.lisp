@@ -79,11 +79,11 @@ called an association list. An association list is a (true) list of
 pairs of associated values. For example, the following is an
 association list:
 
-((a . 5) (b . (1 2)) (c . a))
+((A . 5) (B . (1 2)) (C . A))
 
 BTW, you may find the built-in ALIST and ALISTP of use to you. 
-
-|#
+ 
+|# 
 
 ;;; 3. Write MY-ASSOC, your own implementation of the lisp ASSOC
 ;;; function. You should not use ASSOC anywhere in your definition.
@@ -99,7 +99,6 @@ BTW, you may find the built-in ALIST and ALISTP of use to you.
 (check= (my-assoc '(1 2) '((a . 5) ((1 2) . (3 4)))) '((1 2) . (3 4)))
 (check= (my-assoc 'y '()) NIL)
 (check= (my-assoc '7 '((1 2) (3 4))) NIL)
-
 
 #| 
 
