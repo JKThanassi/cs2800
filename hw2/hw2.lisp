@@ -168,7 +168,7 @@ use REMOVE.
 
 (check= (mirror 'a) 'a)
 (check= (mirror '((g h (a . b) . (c . d)) . (e . f)))
-        '((f . e) (((d . c) b . a) . h) . g))
+	'((f . e) (((d . c) b . a) . h) . g))
 
 ;;; 6. Define a function CONS-CELL-COUNT that counts the number of CONS
 ;;; cells (i.e. the number of pairs) in a given structure
@@ -186,7 +186,7 @@ use REMOVE.
  numbers. E.g. 9 in this representation is '(t nil nil t). This is
  unambiguous because in our notation these numbers never end in nil.
 
-|# 
+|#
 
 (defdata pos-bb (oneof '(t) (cons t pos-bb) (cons nil pos-bb)))
 (defdata bb (oneof nil pos-bb))
@@ -198,7 +198,15 @@ use REMOVE.
 
 
 
-(thm (implies (pos-bbp x)
+
+#| 
+
+ Here are some fascinating properties you might want to *prove* for
+ such lists
+
+|# 
+
+(test? (implies (pos-bbp x)
               (= (* 2 (bb-to-n x)) (bb-to-n (cons nil x)))))
 
 ;;; 8. Write a function LIST-INDEX-OF that takes an ACL2 value x, and
