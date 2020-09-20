@@ -1,5 +1,4 @@
 #|
-=======
 ; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
 ; (Nothing to see here!  Your actual file is after this initialization code);
 (make-event
@@ -119,7 +118,7 @@
 
 ;;; 2. Define and test a function INSERT-RIGHT that takes two symbols
 ;;; and a true list and returns a new list with the second symbol
-;;; inserted after each occurrence of the first
+;;; inserted after each occurrence of the first symbol.
 
 (definec insert-right (x :symbol y :symbol l :tl) :tl
   (cond ((lendp l) l)
@@ -154,7 +153,7 @@ BTW, you may find the built-in ALIST and ALISTP of use to you.
 |# 
 
 ;;; 3. Write MY-ASSOC, your own implementation of the lisp ASSOC
-;;; function. You should not use ASSOC anywhere in your definition.
+;;; function. You should not use ASSOC anywhere in your definition. 
 
 (defdata maybe-pair (oneof nil cons))
 
