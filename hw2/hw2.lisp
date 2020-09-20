@@ -1,3 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 
 #| 
   - These commands are simplifying your interactions with ACL2s
@@ -5,7 +70,7 @@
   - Do not remove them.
 
   - To learn more about what they do, see Ch2 found on the course
-	readings page
+        readings page
 |#
 
 (set-defunc-termination-strictp nil)
@@ -131,6 +196,8 @@ use REMOVE.
 ;;; solve this without changing the method's signature. Nor should you
 ;;; add an accumulator or auxilliary variable in a help method.
 
+
+
 #| 
 
  Here are some fascinating properties you might want to *prove* for
@@ -181,7 +248,7 @@ use REMOVE.
 (check= (zip-lists '(nil nil nil) '(t 3 'orange t t)) 
         '((nil . t) (nil . 3) (nil . 'orange)))
 (test? (implies (and (tlp l1) (tlp l2))
-		(= (len (zip-lists l1 l2)) (min (len l1) (len l2)))))
+                (= (len (zip-lists l1 l2)) (min (len l1) (len l2)))))
 
 
 #| 
@@ -201,8 +268,18 @@ use REMOVE.
 ;;; walk through s for the value associated with x. If the associated
 ;;; value is a symbol, it too must be walked in s. If x has no
 ;;; association, then WALK-SYMBOL should return x.
-
-
+(definec walk-symbol (sym :symbol als :alist) :all
+  (let* 
+    (
+     (ret-assoc (assoc sym als))
+     (ret-car (car ret-assoc))
+     (ret-cdr (cdr ret-assoc)))
+    (cond 
+     ((eql ret-car nil) sym)
+     ((symbolp ret-cdr)
+      (walk-symbol ret-cdr als))
+      (t ret-cdr))
+  ))
 
 (check= (walk-symbol 'a '((a . 5))) 5)
 (check= (walk-symbol 'a '((b . c) (a . b))) 'c)
@@ -211,21 +288,37 @@ use REMOVE.
 (check= (walk-symbol 'b '((a . 5) (b . ((c . a))) (c . a))) '((c . a)))
 (check= (walk-symbol 'd '((a . 5) (b . (1 2)) (c . a) (e . c) (d . e))) 5)
 (check= (walk-symbol 'd '((a . 5) (b . 6) (c . f) (e . c) (d . e))) 'f)
+(check= (walk-symbol 'q '((a . 5) (b . 6) (c . f) (e . c) (d . e))) 'q)
 
 :logic
 
 ;;; 11. Write a function UNZIP-LISTS that recursively deconstructs a
-;;; list of pairs and returns (as a pair) a list of the cars in order
-;;; followed by a list of the cdrs also in order.
+;;; list of pairs and returns a list of the cars in order followed by
+;;; a list of the cdrs also in order.
 
+(definec unzip-helper (lst :alist acc1 :true-list acc2 :true-list) :true-list
+  ( if 
+   (eql lst nil) (cons (reverse acc1) (reverse acc2))
+   (unzip-helper (cdr lst) (cons (caar lst) acc1) (cons (cdar lst) acc2))))
+
+(definec unzip-lists (lst :alist) :true-list
+  (if (lendp lst)
+    nil
+    (unzip-helper (cdr lst) (list (caar lst)) (list (cdar lst)))
+    )
+  )
 
 (check= (unzip-lists '((a . b) (c . d) (e . f))) '((a c e) . (b d f)))
 (check= (unzip-lists '((()))) '((()) ()))
+(check= (unzip-lists nil) nil)
+(test? (implies (and (alistp x) 
+                (not (equal nil x)))
+                (equal (unzip-lists x) (cons (strip-cars x) (strip-cdrs x)))))
 
 (test? (implies (alistp e)
-		(equal (let ((v (unzip-lists e)))
-			 (zip-lists (car v) (cdr v)))
-		       e)))
+                (equal (let ((v (unzip-lists e)))
+                         (zip-lists (car v) (cdr v)))
+                       e)))
 
 ;;; Part II Computational complexity with static & dynamic contract checking
 
