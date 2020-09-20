@@ -114,7 +114,6 @@
               (= (len (drop-last xs))
                  (- (len xs) 1))))
 
-
 ;;; 2. Define and test a function INSERT-RIGHT that takes two symbols
 ;;; and a true list and returns a new list with the second symbol
 ;;; inserted after each occurrence of the first symbol.
@@ -184,27 +183,45 @@ use REMOVE.
 ;;; 4. Define and test a procedure REMOVE-FIRST that takes a symbol
 ;;; and a true list and returns a new list with the first occurrence
 ;;; of the symbol removed.
+(definec remove-first (symb :symbol l :tl) :tl
+  (cond ((equal l nil) nil)
+        ((equal symb (car l)) (cdr l))
+        (t (cons (car l) (remove-first symb (cdr l))))))
 
-
+(check= (remove-first 'r '(a b r c)) '(a b c))
+(check= (remove-first 'r '(a b c)) '(a b c))
+(check= (remove-first 'ed '(ed ba by)) '(ba by))
+(check= (remove-first 'ed '(ba by ed)) '(ba by))
+(check= (remove-first 'ed '()) '())
+(check= (remove-first 'a '(a)) '())
 
 ;;; 5. Define and test a procedure MIRROR that takes a
 ;;; CONS-constructed binary tree (like those we discussed in lecture)
 ;;; and recursively exchanges each CAR with its CDR.
+(definec mirror (tree :all) :all
+  (cond ((not (consp tree)) tree)
+        (t (cons (mirror (cdr tree)) (mirror (car tree))))))
 
-
-
-;(check= (mirror 'a) 'a)
-;(check= (mirror '((g h (a . b) . (c . d)) . (e . f)))
-;        '((f . e) (((d . c) b . a) . h) . g))
+(check= (mirror '((g h (a . b) . (c . d)) . (e . f)))
+    '((f . e) (((d . c) b . a) . h) . g))
+(check= (mirror 'a) 'a)
+(check= (mirror '()) '())
+(check= (mirror '(a . b)) '(b . a))
+(check= (mirror `((1 . 2) . ((5 . 6) . (7 . 8)))) `(((8 . 7) . (6 . 5)) . (2 . 1)))
+(check= (mirror '()) '())
+(check= (mirror '(1)) `(nil . 1))
 
 ;;; 6. Define a function CONS-CELL-COUNT that counts the number of CONS
 ;;; cells (i.e. the number of pairs) in a given structure
-
-
-
-;(check= (cons-cell-count '()) 0)
-;(check= (cons-cell-count '(a . b)) 1)
-;(check= (cons-cell-count '(a b)) 2)
+(definec cons-cell-count (tree :all) :nat
+  (cond ((not (consp tree)) 0)
+        (t (+ 1 (cons-cell-count (car tree)) (cons-cell-count (cdr tree))))))
+ 
+(check= (cons-cell-count '()) 0)
+(check= (cons-cell-count '(a . b)) 1)
+(check= (cons-cell-count '(a b)) 2)
+(check= (cons-cell-count (cons (cons 'a (cons 'b '())) (cons 'c '()))) 4)
+(check= (cons-cell-count '()) 0)
 
 #| 
 
