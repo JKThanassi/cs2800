@@ -1,3 +1,4 @@
 .metadata/
 *.lisp.a2s
 .project
+/lab*
