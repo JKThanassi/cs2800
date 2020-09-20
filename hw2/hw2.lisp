@@ -308,11 +308,25 @@ reached that answer.
 |#
 
 ;; 12. What is the computational complexity of endp?
+O(1)
+
+ends has one operation (atom l), so the complexity is constant = O(1)
 
 ;; 13. What is the computational complexity of true-listp?
+O(n)
+
+true-listp has two or three operations:
+consp (1) and either true-listp (n) and cdr (1) or equal (1).
+
+The complexity of true-listp in the worst case would perform consp, true-listp and cdr on n elements for a list of size n,
+So the complexity of true-listp is said to be O(3*n) = O(n) 
 
 ;; 14. What is the computational complexity of binary-append?
+O(n)
 
+In the worst case, binary-append executes 4 operations, cons, first, binary-append, rest.
+For a list of size n, cons first and rest will be executed n times, and binary-append will be executed n-1 times, so the
+complexity is approximately O(4*n)=O(n).
 
 #| 
 
@@ -349,9 +363,24 @@ reached that answer.
 |# 
 
 ;; 15. What is the computational complexity of the modified listp?
+O(1)
+
+There are 3 operations equal, consp, or, which all get executed in the worst case. The complexity
+of this function is still constant, as O(3)=O(1)
 
 ;; 16. What is the computational complexity of the modified endp?
+O(1)
+
+There are 3 operations in the worst case, if, list and atom. The complexity is O(3) = O(1)
 
 ;; 17. What is the computational complexity of the modified true-listp?
+O(n)
+
+In the worst case, there are 3 operations for each n in a list of size n: if, consp, and rest, as well as a call to true-listp with the list of size n-1, so the complexity is roughly O(4*n)=O(n)
 
 ;; 18. What is the computational complexity of the modified binary-append?
+O(n)
+
+In the worst case, the function never short circuits (error never gets executed), so for every
+element in a list of size n, there are 7 operations run, and then binary-append is called with
+list of size n-1, so the complexity is roughly O(8*n)=O(n).
