@@ -1,11 +1,8 @@
-
-#| 
+#|
   - These commands are simplifying your interactions with ACL2s
-
   - Do not remove them.
-
   - To learn more about what they do, see Ch2 found on the course
-	readings page
+    readings page
 |#
 
 (set-defunc-termination-strictp nil)
@@ -37,6 +34,16 @@
  one element shorter than its input.
 |# 
 
+(definec drop-last (l1 :ne-tl) :tl
+  (if (= 1 (len l1))
+      '()
+      (cons (car l1) (drop-last (cdr l1)))))
+
+(check= (drop-last '(x y z)) `(x y))
+(check= (drop-last '(x)) '())
+(check= (drop-last '(x '(x y z))) '(x))
+
+
 (thm (implies (ne-tlp xs)
               (= (len (drop-last xs))
                  (- (len xs) 1))))
@@ -44,10 +51,21 @@
 
 ;;; 2. Define and test a function INSERT-RIGHT that takes two symbols
 ;;; and a true list and returns a new list with the second symbol
-;;; inserted after each occurrence of the first symbol.
+;;; inserted after each occurrence of the first
+
+(definec insert-right (x :symbol y :symbol l :tl) :tl
+  (cond ((lendp l) l)
+        ((eq (first l) x)
+         (cons x (cons y (insert-right x y (rest l)))))
+        ((cons (first l) (insert-right x y (rest l))))))
 
 (check= (insert-right 'x 'y '(x z z x y x)) '(x y z z x y y x y))
-
+(check= (insert-right 'x 'x '(1 2 3 4)) '(1 2 3 4))
+(check= (insert-right 'x 'x '()) '())
+(thm (implies (and (ne-tlp l) (symbolp x) (symbolp y))
+              (if (in x l)
+                (> (len (insert-right x y l)) (len l))
+                (= (len (insert-right x y l)) (len l)))))
 
 #|
 
@@ -62,12 +80,25 @@ pairs of associated values. For example, the following is an
 association list:
 
 ((a . 5) (b . (1 2)) (c . a))
- 
-|# 
+
+BTW, you may find the built-in ALIST and ALISTP of use to you. 
+
+|#
 
 ;;; 3. Write MY-ASSOC, your own implementation of the lisp ASSOC
-;;; function. You should not use ASSOC anywhere in your definition. 
+;;; function. You should not use ASSOC anywhere in your definition.
 
+(defdata maybe-pair (oneof nil cons))
+
+(definec my-assoc (x :all l :alist) :maybe-pair
+  (cond ((equal (car (car l)) x) (car l))
+        ((null (cdr l)) NIL)
+        ((my-assoc x (cdr l)))))
+
+(check= (my-assoc 'c '((a . 5) (b . (1 2)) (c . a))) '(c . a))
+(check= (my-assoc '(1 2) '((a . 5) ((1 2) . (3 4)))) '((1 2) . (3 4)))
+(check= (my-assoc 'y '()) NIL)
+(check= (my-assoc '7 '((1 2) (3 4))) NIL)#|ACL2s-ToDo-Line|#
 
 
 ;;; 4. Define and test a procedure REMOVE-FIRST that takes a symbol
