@@ -198,7 +198,6 @@ use REMOVE.
 
 
 
-
 #| 
 
  Here are some fascinating properties you might want to *prove* for
@@ -208,11 +207,27 @@ use REMOVE.
 
 (test? (implies (pos-bbp x)
               (= (* 2 (bb-to-n x)) (bb-to-n (cons nil x)))))
+(check= (bb-to-n nil) 0)
+(check= (bb-to-n '(t)) 1)
+(check= (bb-to-n '(nil t)) 2)
+(check= (bb-to-n '(t t)) 3)
+(check= (bb-to-n '(nil nil t)) 4)
+(check= (bb-to-n '(t nil nil t)) 9)
 
 ;;; 8. Write a function LIST-INDEX-OF that takes an ACL2 value x, and
 ;;; a list l containing at least one x, and returns the 0-based index
 ;;; of the first x in l.
 
+(definec list-index-of (x :atom l :tl) :nat
+  :ic (and (tlp l) (atom x) (in x l))
+  (cond ((equal x (first l)) 0)
+        (t (1+ (list-index-of x (rest l))))))
+  
+(check= (list-index-of 2 '(2)) 0)
+(check= (list-index-of 2 '(2 1)) 0)
+(check= (list-index-of 4 '(1 4)) 1)
+(check= (list-index-of 7 '(0 7 0 7)) 1)
+(check= (list-index-of 9 '(1 2 3 9)) 3)
 
 
 ;;; 9. Write a function ZIP-LISTS that takes two lists l1 and
@@ -222,7 +237,16 @@ use REMOVE.
 ;;; one.
 
 
+(definec zip-lists (l1 :tl l2 :tl) :alist
+  (if (not (or (lendp l1) (lendp l2)))
+    (cons (cons (first l1) (first l2)) (zip-lists (rest l1) (rest l2)))
+    '()))
 
+(check= (zip-lists '(1 3 5) '(2 4 6)) '((1 . 2) (3 . 4) (5 . 6)))
+(check= (zip-lists '() '()) '())
+(check= (zip-lists '(1 2) '()) '())
+(check= (zip-lists '(nil nil nil) '(t 3 'orange t t)) 
+        '((nil . t) (nil . 3) (nil . 'orange)))
 (test? (implies (and (tlp l1) (tlp l2))
                 (= (len (zip-lists l1 l2)) (min (len l1) (len l2)))))
 
