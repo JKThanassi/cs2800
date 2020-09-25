@@ -1,3 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 
 #| 
   - These commands are simplifying your interactions with ACL2s
@@ -5,7 +70,7 @@
   - Do not remove them.
 
   - To learn more about what they do, see Ch2 found on the course
-	readings page
+        readings page
 |#
 
 (set-defunc-termination-strictp nil)
@@ -17,7 +82,7 @@
 (set-defunc-generalize-contract-thm nil)
 
 #| 
-
+https://go.codetogether.com/#/Y8BmvlVZpnzUxEHgeFVDtK/okw20eAhP6i8WQ5bsH3YP3
  It would be a great idea to get started early! This homework picks up
  where the lab left off. In the last lab, we used ACL2s to define the
  syntax and semantics of SRPNEL (Simple Reverse Polish Notation
@@ -50,6 +115,8 @@
 ; they do not include any of the RPNEL operators. Examples of vars include
 ; symbols such as x, y, z, etc.
 
+;(defdata var (not (oneof 
+
 (check= (varp '-) nil)
 (check= (varp '+) nil)
 (check= (varp '*) nil)
@@ -69,7 +136,7 @@
 ; iff the test? form fails, i.e., it finds a counterexample.
 
 (must-fail (test? (implies (symbolp x)
-			   (varp x))))
+                           (varp x))))
 
 ;;; We use defdata to define boper the binary operators (same as lab):
 
@@ -80,6 +147,8 @@
 
 ;;; 1. Use defdata to define rpnexpr with an inductive data definition:
 
+(defdata rpnexpr (oneof rational var `(,rpnexpr -) `(,rpnexpr ,rpnexpr ,boper)))
+
 
 (check= (rpnexprp '45/3) t)
 (check= (rpnexprp '((x y +) (z -) -)) t)
@@ -89,29 +158,29 @@
 ;; 2. What should the following check= forms evaluate to? Make sure
 ;; you understand each argument that rpnexprp gets for input.
 
-(check= (rpnexprp  12) )
-(check= (rpnexprp '12) )
-(check= (rpnexprp ''12) )
+(check= (rpnexprp  12) t)
+(check= (rpnexprp '12) t)
+(check= (rpnexprp ''12) nil)
 
-(check= (rpnexprp  (- 45))  )
-(check= (rpnexprp '(45 -))  )
-(check= (rpnexprp ''(45 -)) )
+(check= (rpnexprp  (- 45)) t)
+(check= (rpnexprp '(45 -)) t)
+(check= (rpnexprp ''(45 -)) nil)
 
-(check= (rpnexprp  (+ 1/2 45)) )
-(check= (rpnexprp '(+ 1/2 45)) )
-(check= (rpnexprp ''(1/2 45 +)) )
+(check= (rpnexprp  (+ 1/2 45)) t)
+(check= (rpnexprp '(+ 1/2 45)) nil)
+(check= (rpnexprp ''(1/2 45 +)) nil)
 
-(check= (rpnexprp  (expt 2 3)) )
-(check= (rpnexprp '(expt 2 3)) )
-(check= (rpnexprp '(2 3 expt)) )
-(check= (rpnexprp '(2 expt 3)) )
-(check= (rpnexprp ''(expt 2 3)) )
+(check= (rpnexprp  (expt 2 3)) t)
+(check= (rpnexprp '(expt 2 3)) nil)
+(check= (rpnexprp '(2 3 expt)) nil)
+(check= (rpnexprp '(2 expt 3)) nil)
+(check= (rpnexprp ''(expt 2 3)) nil)
 
-(check= (rpnexprp (car (cons 1 "hi there"))) )
-(check= (rpnexprp `(,(car (cons 1 "hi there")) 12 +)) )
-(check= (rpnexprp '(+ (car (cons 1 "hi there")) 12)) )
-(check= (rpnexprp '((car (cons 1 "hi there")) + 12)) )
-(check= (rpnexprp `(,(car (cons 1 "hi there")) + 12)) )
+(check= (rpnexprp (car (cons 1 "hi there"))) t)
+(check= (rpnexprp `(,(car (cons 1 "hi there")) 12 +)) t) 
+(check= (rpnexprp '(+ (car (cons 1 "hi there")) 12)) nil)
+(check= (rpnexprp '((car (cons 1 "hi there")) + 12)) nil)
+(check= (rpnexprp `(,(car (cons 1 "hi there")) + 12)) nil)
 
 #|
 
@@ -124,6 +193,8 @@
 |#
 
 ;; 3. Why am I not going to bother asking you to provide an example?
+; Since reverse polish notation expects the operator to be at the tail of the list, no RPNEL expression with an operator will be valid LISP. 
+; Since LISP expects the first element of a list to be a function it will always fail to evaluate.
  
 
 #| 
@@ -157,7 +228,15 @@ x.
 ;; environment ρ, returns the value of x in ρ. Use case-match in your
 ;; definition.
 
+(definec lookup (x :var p :env) :rational
+  (let ((f (first p)))
+    (case-match f
+                ('nil 1)
+                ((!x . val) val)
+                (& (lookup x (rest p))))))
+
 #| 
+
 
 If we look up a var that is not the left-hand side of a binding in
 the environment, then we will, by default right now, say that
@@ -183,7 +262,13 @@ Section 2.13 of the lecture notes.
 ;; in and editing it. Remember to use the "template" that defdatas
 ;; give rise to as per Section 2.13 of the lecture notes.
 
-
+(definec rpneval (expr :rpnexpr envir :env) :rational
+  (case-match expr
+              ((exp '-) (- (rpneval exp envir)))
+              ((e1 e2 '+) (+ (rpneval e1 envir) (rpneval e2 envir)))
+              ((e1 e2 '-) (- (rpneval e1 envir) (rpneval e2 envir)))
+              ((e1 e2 '*) (* (rpneval e1 envir) (rpneval e2 envir)))
+              (v-or-r (if (rationalp v-or-r) v-or-r (lookup v-or-r envir)))))
                     
 #|
 
@@ -195,6 +280,8 @@ Section 2.13 of the lecture notes.
 
 (check= (rpneval '((x y +) (z -) -) '((y . 3/2) (z . 1/2)))
         3)
+(check= (rpneval '((i -) j *) '()) -1)
+(check= (rpneval '(x (s y +) *) '((x . 3) (s . 2))) 9)
 
 
 #|
@@ -218,15 +305,23 @@ Section 2.13 of the lecture notes.
 ;; 6. Specify the following properties using (test? ...) and rpneval.
 
 ;; A. A = (- (- A)), in RPNEL, for any rational A.
+(test? (implies (and (rationalp a) (envp l)) (equal a (rpneval `( (,a -) -) l))))
 
 ;; B. (A B -) = (A (B -) +), in RPNEL, for any rationals A and B.
+(test? (implies (and (rationalp a) (rationalp b) (envp l)) (equal (rpneval `(,a ,b -) l) (rpneval `(,a (,b -) +) l))))
 
 ;; C. (A (B C +) *) = ((A B *) (A C *) +), in RPNEL, for any rationals A, B & C.
+(test? (implies (and (rationalp a) (rationalp b) (rationalp c) (envp l)) 
+                (equal (rpneval `(,a (,b ,c +) *) l) (rpneval `((,a ,b *) (,a ,c *) +) l))))
 
 ;; D. (E1 E2 -) = (E1 (E2 -) +), in RPNEL, for any rpnexprs E1 and E2.
+(test? (implies (and (rpnexprp e1) (rpnexprp e2) (envp l)) 
+                (equal (rpneval `(,e1 ,e2 -) l) (rpneval `(,e1 (,e2 -) +) l))))
 
 ;; E. (E1 (E2 E3 +) *) = ((E1 E2 *) (E1 E3 *) +), in RPNEL,
 ;;    for any rpnexpr's E1, E2, E3.
+(test? (implies (and (rpnexprp e1) (rpnexprp e2) (rpnexprp e3) (envp l)) 
+                (equal (rpneval `(,e1 (,e2 ,e3 +) *) l) (rpneval `((,e1 ,e2 *) (,e1 ,e3 *) +) l))))
 
 
 ;;; RPNPRGM Langauge 
@@ -248,6 +343,7 @@ syntactically distinguish good programs from bad.
 
 ;; 7. Why is it now harder to syntactically distinguish good programs
 ;; from bad?
+; The parens for rpn were explicit about which atoms belonged to which operator. Now it is less clear.
 
 #|
 
@@ -259,7 +355,7 @@ just "data". Unary negation is now written "0-".
 (defdata data (oneof (enum '(+ - * 0-)) rational)) ;; var
 
 ;; 8. Why is unary "-" (negation) now written "0-"?
-
+;Since the forms of our expressions are not bound by parens we must be explicit about whether an operator is unary or binary. This is why we specify negation as 0-
 ;; We use defdata to define rpnpgm with an inductive data definition:
 (defdata rpnprgm (listof data))
 
@@ -308,7 +404,8 @@ occurs anywhere in the evaluation of the expression).
 (check= (rat-or-errp 5)      t)
 (check= (rat-or-errp 'error) t)
 (check= (rat-or-errp "five") nil)
-
+(check= (rat-or-errp ''error) nil)
+(check= (rat-or-errp nil) nil)
 (check= (rat-or-errp  (+ 2 3))   t)
 (check= (rat-or-errp '(+ 2 3)) nil)
 (check= (rat-or-errp '(2 + 3)) nil)
@@ -322,25 +419,41 @@ occurs anywhere in the evaluation of the expression).
 
 
 
-(definec rpnprgmeval-help (pgm :rpnprgm stk :???) :rat-or-err
+(defdata lor (listof rational))
+
+(definec rpnprgmeval-help (pgm :rpnprgm stk :lor) :rat-or-err
   (case-match pgm
     ('()
      (case-match stk
        ((s1 . &) s1) ;; & serves as a ["wildcard" value](https://en.wikipedia.org/wiki/Wildcard_character).
        (& 'error)))
-
-
-
-    
-
-    
-    ((n . res) (rpnprgmeval-help res `(,n . ,stk)))))
+    ((n . res)
+      (if (rationalp n) 
+          (rpnprgmeval-help res `(,n . ,stk))
+          (let 
+            ((stk1 (car stk))
+             (stk2 (cadr stk)))
+            (if (equal '0- n)
+                (if (null stk1)
+                    'error
+                    (rpnprgmeval-help res `(,(* -1 stk1) . ,(cdr stk))))
+                (if (or (null stk1) (null stk2))
+                    'error
+                    (case-match n
+                      ('+ (rpnprgmeval-help res `(,(+ stk1 stk2) . ,(cddr stk))))
+                      ('- (rpnprgmeval-help res `(,(- stk2 stk1) . ,(cddr stk))))
+                      ('* (rpnprgmeval-help res `(,(* stk1 stk2) . ,(cddr stk))))))))))))
 
 (definec rpnprgmeval (pgm :rpnprgm) :rat-or-err
   (rpnprgmeval-help pgm '()))
 
 (check= (rpnprgmeval '(3 5 * * 2 3 + - *)) 'error)
 (check= (rpnprgmeval '(3 5 2 3 + - *)) 0)
+(check= (rpnprgmeval '()) 'error)
+(check= (rpnprgmeval '(+ * 0- -)) 'error)
+(check= (rpnprgmeval '(1 2 3 4 7 9 31 2 99)) 99)
+(check= (rpnprgmeval '(5 3 -1 0- + +)) 9)#|ACL2s-ToDo-Line|#
+
 
 
 #| 
@@ -356,3 +469,8 @@ rpnprgmeval.
 
 ;; 11. What important difference do you see? Speculate as to why this
 ;; is.
+;;
+;; The important difference here is that we are creating our own call stack with the rpnprmgeval fn and iterating over the list tail-recursivley while the 
+;; lab version leverages the lisp call stack
+;; The lab version is a tree structure in which each node is itself a valid expression. This lends itself towards natural recursion--checking each subtree until we hit a base case. We are able to do this since we know that any snprnexpr that can be evaluated is, in fact, correctly formed due to the input contracts.
+;; The no paren version is not defined as strictly, and as a concequence, we do not know if the expression is valid. This means that we have to build up a tree like structure usinig stack to operate on, apply functions to that stack when valid, and error when not.
