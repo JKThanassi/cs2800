@@ -470,7 +470,13 @@ rpnprgmeval.
 ;; 11. What important difference do you see? Speculate as to why this
 ;; is.
 ;;
-;; The important difference here is that we are creating our own call stack with the rpnprmgeval fn and iterating over the list tail-recursivley while the 
-;; lab version leverages the lisp call stack
-;; The lab version is a tree structure in which each node is itself a valid expression. This lends itself towards natural recursion--checking each subtree until we hit a base case. We are able to do this since we know that any snprnexpr that can be evaluated is, in fact, correctly formed due to the input contracts.
-;; The no paren version is not defined as strictly, and as a concequence, we do not know if the expression is valid. This means that we have to build up a tree like structure usinig stack to operate on, apply functions to that stack when valid, and error when not.
+;; The important difference here is that we are creating our own call stack with the rpnprmgeval fn and 
+;; iterating over the list tail-recursivley while the lab version leverages the lisp call stack.
+;; 
+;; The lab version is a tree structure in which each node is itself a valid expression. This lends itself 
+;; towards natural recursion--checking each subtree until we hit a base case. We are able to do this since 
+;; we know that any snprnexpr that can be evaluated is, in fact, correctly formed due to the input contracts.
+;; 
+;; The no paren version is not defined as strictly, and as a consequence, we do not know if the expression 
+;; is valid. This means that we have to build up a tree like structure using stack to operate on, 
+;; apply functions to that stack when valid, and error when not.
