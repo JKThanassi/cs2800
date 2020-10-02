@@ -1,3 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 
 (set-defunc-termination-strictp nil)
 (set-defunc-function-contract-strictp nil)
@@ -194,7 +259,7 @@ ordered sets.
 ;; 4. Your task: implement an efficient (polynomial time) algorithm
 ;; SATP for deciding the satisfiability of an HSF sentence in our
 ;; format.
-
+;; JOE will take this
 
 #|
 
@@ -216,33 +281,85 @@ to describe the desired input as an input contract.
 (defdata gcs (listof gc))
 (defdata dc `(,var <= ,gc))
 (defdata hsf (listof dc))
+;;our defined types
+(defdata bhf-var `(,var <= ()))
+(defdata hc (oneof dc gc))
+(defdata he (listof hc))
+
+#| Given some starter code |#
+(definec get-unique-vars (prg :he) :gc
+  (if (endp prg)
+      '()
+      (let ((fst-prg (first prg)))
+        (case-match fst-prg
+        ((x '<= nil) (set::mergesort (append (get-unique-vars (rest prg)) x)))
+        ((x '<= y) (set::mergesort (append (append y x) (get-unique-vars (rest prg)))))
+        (x (set::mergesort (append x (get-unique-vars (rest prg)))))))))
 
 
-#| Given some starter code |# 
+(definec initialize-alist (vars :gc acc :alist) :alist
+  (if (endp vars)
+      acc
+      (initialize-alist (rest vars)
+                        (put-assoc (first vars) nil acc))))
+
+(definec init-bhf-vars (prg :he lut :alist) :alist
+  (cond 
+   ((endp prg) lut)
+   ((bhf-varp (first prg)) (init-bhf-vars (rest prg) (put-assoc (caar prg) t lut)))
+   (t (init-bhf-vars (rest prg) lut))))
+  
+
+(definec all-truep (l :gc lookup :alist) :bool
+  (if (endp l)
+      t
+      (and 
+        (assoc (first l) lookup)
+        (all-truep (rest l) lookup))))#|ACL2s-ToDo-Line|#
+
+
+(definec sat-helper (prgm :he working-prgm :he lut :alist change :bool consistent :bool) :bool
+  :ic (and (not (in nil prgm)) (not (in nil working-prgm)) (set::setp lut) (not (assoc-equal nil lut)) (not (equal nil lut)))
+  (cond ((not consistent) nil)
+        ((or (endp prgm) (not change)) consistent)
+        ((endp working-prgm) (sat-helper prgm prgm lut change consistent))
+        ((let ((fst-working (first working-prgm)))
+           (case-match fst-working
+                       ((v '<= '()) (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t t))
+                       ((v '<= lov) (if (and (all-truep lov lut) (not (assoc v lut)))
+                                             (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t consistent)
+                                             (sat-helper (remove fst-working prgm) (rest working-prgm) lut change consistent)))
+                       (x (if (all-truep x lut) (sat-helper prgm (rest working-prgm) lut change nil) (sat-helper prgm (rest working-prgm) lut change consistent))))))))
+
 
 (definec satp (prg :hsf goal :gcs) :bool
-  ...) 
+  (let ((eqn (append prg goal)))
+    (sat-helper eqn
+                (initialize-alist (get-unique-vars eqn))
+                t
+                t)))
+
 
 (check= (satp '((r <= ()))
-	      '((r)))
-	'nil)
+              '((r)))
+        'nil)
 
 (check= (satp '((r <= (s)))
-	      '((r)))
-	't)
+              '((r)))
+        't)
 
 (check= (satp '((r <= (s))
-		(s <= (r)))
-	      '((s)))
-	t)
+                (s <= (r)))
+              '((s)))
+        t)
 
 (check= (satp '((p <= (a b c d e))
-		(p <= (q r s v))
-		(r <= ())
-		(r <= (v x))
-		(s <= ())
-		(s <= (p q)))
-	      '((r s)))
+                (p <= (q r s v))
+                (r <= ())
+                (r <= (v x))
+                (s <= ())
+                (s <= (p q)))
+              '((r s)))
         nil)
 
 (check= (satp '((p <= (a b c))
