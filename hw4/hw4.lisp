@@ -288,14 +288,22 @@ to describe the desired input as an input contract.
 
 #| Given some starter code |#
 (definec get-unique-vars (prg :he) :gc
+  :ic (not (in nil prg))
   (if (endp prg)
       '()
       (let ((fst-prg (first prg)))
         (case-match fst-prg
-        ((x '<= nil) (set::mergesort (append (get-unique-vars (rest prg)) x)))
-        ((x '<= y) (set::mergesort (append (append y x) (get-unique-vars (rest prg)))))
+        ((x '<= nil) (set::mergesort (cons x (get-unique-vars (rest prg)))))
+        ((x '<= y) (set::mergesort (append (cons x y) (get-unique-vars (rest prg)))))
         (x (set::mergesort (append x (get-unique-vars (rest prg)))))))))
 
+(check= (get-unique-vars '((p <= (a b c d e))
+                (p <= (q r s v))
+                (r <= ())
+                (r <= (v x))
+                (s <= ())
+                (s <= (p q))
+                (a b))) '(a b c d e p q r s v x))
 
 (definec initialize-alist (vars :gc acc :alist) :alist
   (if (endp vars)
@@ -315,29 +323,46 @@ to describe the desired input as an input contract.
       t
       (and 
         (assoc (first l) lookup)
-        (all-truep (rest l) lookup))))#|ACL2s-ToDo-Line|#
+        (all-truep (rest l) lookup))))
 
-
-(definec sat-helper (prgm :he working-prgm :he lut :alist change :bool consistent :bool) :bool
+(definec sat-helper (prgm :he working-prgm :he lut :alist change :bool consistent :bool inner :bool) :bool
   :ic (and (not (in nil prgm)) (not (in nil working-prgm)) (set::setp lut) (not (assoc-equal nil lut)) (not (equal nil lut)))
   (cond ((not consistent) nil)
-        ((or (endp prgm) (not change)) consistent)
-        ((endp working-prgm) (sat-helper prgm prgm lut change consistent))
-        ((let ((fst-working (first working-prgm)))
-           (case-match fst-working
-                       ((v '<= '()) (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t t))
-                       ((v '<= lov) (if (and (all-truep lov lut) (not (assoc v lut)))
-                                             (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t consistent)
-                                             (sat-helper (remove fst-working prgm) (rest working-prgm) lut change consistent)))
-                       (x (if (all-truep x lut) (sat-helper prgm (rest working-prgm) lut change nil) (sat-helper prgm (rest working-prgm) lut change consistent))))))))
+        ((endp prgm) consistent)
+        ((not inner) (if change (sat-helper prgm prgm lut nil consistent t) consistent))
+        (inner (let ((fst-working (first working-prgm)) (still-inner (not (endp working-prgm))))
+                  (case-match fst-working
+                              ((v '<= '()) (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t t still-inner))
+                              ((v '<= lov) (if (and (all-truep lov lut) (not (assoc v lut)))
+                                             (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t consistent still-inner)
+                                             (sat-helper (remove fst-working prgm) (rest working-prgm) lut change consistent still-inner)))
+                              (x (if (all-truep x lut) (sat-helper prgm (rest working-prgm) lut change nil still-inner) (sat-helper prgm (rest working-prgm) lut change consistent still-inner))))))))#|ACL2s-ToDo-Line|#
+
+
+;;(definec sat-helper (prgm :he working-prgm :he lut :alist change :bool consistent :bool inner :bool) :bool
+;;  :ic (and (not (in nil prgm)) (not (in nil working-prgm)) (set::setp lut) (not (assoc-equal nil lut)) (not (equal nil lut)))
+;;  (cond ((not consistent) nil)
+;;        ((endp prgm) consistent)
+;;        ((and (not inner) (not change)) nil)
+;        ((or (endp prgm) (not change)) consistent)
+;;        ((endp working-prgm) (sat-helper prgm prgm lut nil consistent t))
+;;        ((let ((fst-working (first working-prgm)) (still-inner (not (endp working-prgm))))
+;;           (case-match fst-working
+;;                       ((v '<= '()) (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t t still-inner))
+;;                       ((v '<= lov) (if (and (all-truep lov lut) (not (assoc v lut)))
+;;                                             (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t consistent still-inner)
+;;                                             (sat-helper (remove fst-working prgm) (rest working-prgm) lut change consistent still-inner)))
+;;                      (x (if (all-truep x lut) (sat-helper prgm (rest working-prgm) lut change nil still-inner) (sat-helper prgm (rest working-prgm) lut change consistent still-inner))))))))
 
 
 (definec satp (prg :hsf goal :gcs) :bool
+  :ic (and (not (in nil goal)) (not (in nil prg)))
   (let ((eqn (append prg goal)))
-    (sat-helper eqn
-                (initialize-alist (get-unique-vars eqn))
+    (sat-helper eqn eqn
+                (initialize-alist (get-unique-vars eqn) '())
                 t
-                t)))
+                t
+                nil)))
 
 
 (check= (satp '((r <= ()))
