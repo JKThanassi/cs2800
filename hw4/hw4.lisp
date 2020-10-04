@@ -190,6 +190,18 @@ first clause above.
 ;; 4. (Offer an explanation, in terms of our propositional
 ;; equivalences, why or how this transformation is logically sound.)
 
+#|
+Given the implication B ^ C ^ D -> A we can break this down into the form shown on line 173:
+
+1. We know that A => B is equivalent to !A v B 
+2. If we substitute (B ^ C ^ D) for A and A for B we get:
+  ! (B ^ C ^ D) v A
+3. Going further, we can replace ! (B ^ C ^ D) with !B v !C v !D
+  This yields !B v !C v !D v A which is the original form. 
+
+Thus the two notations are equivalent
+|#
+
 #| 
 
 We will, in fact, go a step or two farther. We will instead write our
