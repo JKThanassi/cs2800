@@ -550,6 +550,7 @@ to describe the desired input as an input contract.
 (check= (satp '((r <= ()))
               '((r)))
         'nil)
+
 (check= (satp '((r <= (s)))
               '((r)))
         't)
@@ -581,7 +582,27 @@ to describe the desired input as an input contract.
                 (q <= (a b c))
                 (r <= (p q)))
               '((q) (r)))
-        nil)#|ACL2s-ToDo-Line|#
+        nil)
+
+(check= (satp '((p <= (a b c))
+                (q <= (a b c))
+                (r <= (p q)))
+              '())
+        t)
+
+(check= (satp '((b <= ())
+                (c <= ())
+                (q <= (a b c))
+                (r <= (p q)))
+              '((q) (r)))
+        T)
+
+(check= (satp '((b <= ())
+                (c <= ())
+                (q <= (a b c))
+                (r <= (p q)))
+              '((b) (c)))
+        NIL)#|ACL2s-ToDo-Line|#
 
 
 
