@@ -1,4 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
 
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 (set-defunc-termination-strictp nil)
 (set-defunc-function-contract-strictp nil)
 (set-defunc-body-contracts-strictp nil)
@@ -188,6 +252,18 @@ first clause above.
 ;; 4. (Offer an explanation, in terms of our propositional
 ;; equivalences, why or how this transformation is logically sound.)
 
+#|
+Given the implication B ^ C ^ D -> A we can break this down into the form shown on line 173:
+
+1. We know that A => B is equivalent to !A v B 
+2. If we substitute (B ^ C ^ D) for A and A for B we get:
+  ! (B ^ C ^ D) v A
+3. Going further, we can replace ! (B ^ C ^ D) with !B v !C v !D
+  This yields !B v !C v !D v A which is the original form. 
+
+Thus the two notations are equivalent
+|#
+
 #| 
 
 We will, in fact, go a step or two farther. We will instead write our
@@ -256,7 +332,7 @@ ordered sets.
 ;; 4. Your task: implement an efficient (polynomial time) algorithm
 ;; SATP for deciding the satisfiability of an HSF sentence in our
 ;; format.
-
+;; JOE will take this
 
 #|
 
@@ -278,17 +354,202 @@ to describe the desired input as an input contract.
 (defdata gcs (listof gc))
 (defdata dc `(,var <= ,gc))
 (defdata hsf (listof dc))
+;;our defined types
+(defdata bhf-var `(,var <= ()))
+(defdata hc (oneof dc gc))
+(defdata he (listof hc))
+
+#| Given some starter code |#
+(definec get-unique-vars (prg :he) :gc
+  :ic (not (in nil prg))
+  (if (endp prg)
+      '()
+      (let ((fst-prg (first prg)))
+        (case-match fst-prg
+        ((x '<= nil) (set::mergesort (cons x (get-unique-vars (rest prg)))))
+        ((x '<= y) (set::mergesort (append (cons x y) (get-unique-vars (rest prg)))))
+        (x (set::mergesort (append x (get-unique-vars (rest prg)))))))))
+
+(check= (get-unique-vars '((p <= (a b c d e))
+                (p <= (q r s v))
+                (r <= ())
+                (r <= (v x))
+                (s <= ())
+                (s <= (p q))
+                (a b))) '(a b c d e p q r s v x))
+
+(definec initialize-alist (vars :gc acc :alist) :alist
+  (if (endp vars)
+      acc
+      (initialize-alist (rest vars)
+                        (put-assoc (first vars) nil acc))))
+
+(check= (initialize-alist '(a b c d e f g) nil) '((a) (b) (c) (d) (e) (f) (g)))
+
+(definec init-bhf-vars (prg :he lut :alist) :alist
+  (cond 
+   ((endp prg) lut)
+   ((bhf-varp (first prg)) (init-bhf-vars (rest prg) (put-assoc (caar prg) t lut)))
+   (t (init-bhf-vars (rest prg) lut))))
+
+(check= (init-bhf-vars '((a <= ())
+                         (b <= ())
+                         (c <= ())
+                         (p <= (a b c))
+                         (q <= (a b c))
+                         (r <= (p q)))
+                       (initialize-alist 
+                        (get-unique-vars '((a <= ())
+                                           (b <= ())
+                                           (c <= ())
+                                           (p <= (a b c))
+                                           (q <= (a b c))
+                                           (r <= (p q))))
+                        '()))
+        '((a . t) (b . t) (c . t) (p . nil) (q . nil) (r . nil)))
+
+(definec all-truep (l :gc lookup :alist) :bool
+         (if (endp l)
+           t
+           (and 
+             (cdr (assoc (first l) lookup))
+             (all-truep (rest l) lookup))))
+
+(check= (all-truep '(a b c) '((a) (b t) (c t))) nil)
+(check= (all-truep '(b c) '((a) (b t) (c t))) t)
+
+(definec filter-single-vars (program :hsf) :hsf
+         (if (endp program) nil 
+           (let ((fst-hsf (first program)))
+             (case-match fst-hsf
+                         ((& '<= '()) (filter-single-vars (rest program)))
+                         (& (cons fst-hsf (filter-single-vars (rest program))))))))
+
+(definec no-bhf-property (prg :hsf) :bool
+         (cond 
+           ((endp prg) t)
+           ((bhf-varp (first prg)) nil) 
+           (t (no-bhf-property (rest prg)))))
+
+(check= (filter-single-vars '((a <= ())
+                (b <= ())
+                (c <= ())
+                (p <= (a b c))
+                (q <= (a b c))
+                (r <= (p q)))) 
+        '(
+                (p <= (a b c))
+                (q <= (a b c))
+                (r <= (p q))))
+
+(thm (implies (and (hsfp a)) (no-bhf-property (filter-single-vars a))))
+
+(definec sat-helper-goal (prgm :gcs lut :alist) :bool
+  (if (endp prgm) 
+    t       
+    (let ((nhc (first prgm)))
+      (if (all-truep nhc lut)
+        nil
+        (sat-helper-goal (rest prgm) lut)))))
+
+(defdata hsf-bool-lut `(,hsf ,bool ,alist))
+(definec sat-helper-hsf (prgm :hsf working-prgm :hsf lut :alist change :bool) :hsf-bool-lut
+  :ic (not (endp lut))
+         (if (endp working-prgm) (list prgm change lut)
+           (let ((fst-working (first working-prgm)))
+             (case-match fst-working
+                         ((& '<= '()) (sat-helper-hsf prgm (rest working-prgm) lut change))
+                         ((v '<= lov) (if (and (all-truep lov lut) (not (cdr (assoc v lut)))) 
+                                        (sat-helper-hsf (remove fst-working prgm :test 'equal) (rest working-prgm) (put-assoc v t lut) t )
+                                        (sat-helper-hsf prgm (rest working-prgm) lut change)
+                                        ))))))
+
+(definec sat-helper (prgm :hsf goal :gcs lut :alist) :bool
+  :ic (and (not (endp lut)) (not (in nil goal)))
+  (if (not (endp prgm))
+         (let ((result (sat-helper-hsf prgm prgm lut nil)))
+           (case-match result
+                       ((p t l) (sat-helper p goal l))
+                       ((& nil l) (sat-helper-goal goal l))))
+  (sat-helper-goal goal lut)))
 
 
-#| Given some starter code |# 
+
+
+;(definec sat-helper (prgm :he 
+;                     working-prgm :he 
+;                     lut :alist 
+;                     change :bool 
+;                     consistent :bool 
+;                     inner :bool) :bool
+;  :ic (and (not (in nil prgm)) 
+;           (not (in nil working-prgm)) 
+;           (set::setp lut) 
+;           (not (assoc-equal nil lut)) 
+;           (not (equal nil lut)))
+;  (cond ((or (endp prgm) #|(not change)|# (not consistent)) consistent)
+;        ((not inner) (if (not change) consistent (sat-helper prgm prgm lut nil consistent t)))
+;        (inner (let ((fst-working (first working-prgm)) 
+;                     (still-inner (not (endp working-prgm))))
+;                 (case-match fst-working
+;                             ((v '<= '()) (sat-helper prgm 
+;                                                      (rest working-prgm) 
+;                                                      lut
+;                                                      change
+;                                                      (cdr (assoc v lut))
+;                                                      still-inner))
+;                             ((v '<= lov) (if (and (all-truep lov lut) (not (cdr(assoc v lut))))
+;                                            (sat-helper prgm 
+;                                                        (rest working-prgm) 
+;                                                        (put-assoc v t lut) 
+;                                                        t 
+;                                                        consistent
+;                                                        still-inner)
+;                                            (sat-helper (rest prgm)
+;                                                        (rest working-prgm) 
+;                                                        lut 
+;                                                        change 
+;                                                        consistent 
+;                                                        still-inner)))
+;                             (x (sat-helper prgm
+;                                            (rest working-prgm)
+;                                            lut
+;                                            change
+;                                            (if (all-truep x lut)
+;                                              nil
+;                                              consistent)
+;                                            still-inner)))))))
+
+;;(definec sat-helper (prgm :he working-prgm :he lut :alist change :bool consistent :bool inner :bool) :bool
+;;  :ic (and (not (in nil prgm)) (not (in nil working-prgm)) (set::setp lut) (not (assoc-equal nil lut)) (not (equal nil lut)))
+;;  (cond ((not consistent) nil)
+;;        ((endp prgm) consistent)
+;;        ((and (not inner) (not change)) nil)
+;        ((or (endp prgm) (not change)) consistent)
+;;        ((endp working-prgm) (sat-helper prgm prgm lut nil consistent t))
+;;        ((let ((fst-working (first working-prgm)) (still-inner (not (endp working-prgm))))
+;;           (case-match fst-working
+;;                       ((v '<= '()) (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t t still-inner))
+;;                       ((v '<= lov) (if (and (all-truep lov lut) (not (assoc v lut)))
+;;                                             (sat-helper prgm (rest working-prgm) (put-assoc v t lut) t consistent still-inner)
+;;                                             (sat-helper (remove fst-working prgm) (rest working-prgm) lut change consistent still-inner)))
+;;                      (x (if (all-truep x lut) (sat-helper prgm (rest working-prgm) lut change nil still-inner) (sat-helper prgm (rest working-prgm) lut change consistent still-inner))))))))
+
 
 (definec satp (prg :hsf goal :gcs) :bool
-  ...) 
+  :ic (and (not (endp prg)) (not (in nil goal)))
+         (let ((eqn (append prg goal)))
+           (sat-helper (filter-single-vars prg)
+                       goal
+                       (init-bhf-vars eqn (initialize-alist (get-unique-vars eqn) '())))))
 
 (check= (satp '((r <= ()))
               '((r)))
         'nil)
 
+(check= (satp '((r <= ()))
+              '((r)))
+        'nil)
 (check= (satp '((r <= (s)))
               '((r)))
         't)
@@ -320,7 +581,8 @@ to describe the desired input as an input contract.
                 (q <= (a b c))
                 (r <= (p q)))
               '((q) (r)))
-        nil)
+        nil)#|ACL2s-ToDo-Line|#
+
 
 
 #| 
@@ -344,7 +606,7 @@ the actual project due Monday Nov 2.
 
 We have already seen how useful boolean formulae can be in modelling
 many problems in computer science. We have read about (though maybe
-not in full detail) how avionics problems can be rendered with boolean
+                                                              not in full detail) how avionics problems can be rendered with boolean
 constraints. We have seen also that there are
 theoretically-interesting open questions in these areas, and armed
 with what we now know some of these are pretty approachable.
@@ -364,14 +626,14 @@ back on and complete a smaller scale portiono and maybe pivot some
 from there.
 
 One category might be to encode some particular problem (probably
-something relevant to a class you have taken) as a SAT problem, and
+                                                          something relevant to a class you have taken) as a SAT problem, and
 figure out how to run that in a modern, capable SAT solver.
 
 You might want to see how ACL2s compares against one of the [SAT
-Olympians](https://www.labri.fr/perso/lsimon/flog2018/) on some
+                                                              Olympians](https://www.labri.fr/perso/lsimon/flog2018/) on some
 interesting benchmark problem instances. (BTW I am sorry to tell you
-that you have already missed the [2020 SAT
-Competition](http://www.satcompetition.org/).)
+                                              that you have already missed the [2020 SAT
+                                                                                Competition](http://www.satcompetition.org/).)
 
 Is there a design recipe for encoding problems convenient for SAT
 solvers? Could there be? What would it look like, or, if not, what
@@ -383,7 +645,7 @@ should be some source code component, but what and how much can vary.
 
 You might just be interested in learning more about the basics of
 [computational complexity
-theory](https://en.wikipedia.org/wiki/NP_(complexity)). Maybe you want
+               theory](https://en.wikipedia.org/wiki/NP_(complexity)). Maybe you want
 to write up a instructional tutorial geared toward someone who has
 taken 1800 and 2500, and is just in the middle of OOD. 
 
@@ -419,22 +681,22 @@ be the first time we hear about your idea.
 The following is a brief template you might consider:
 
 General problem area
-  What are you going to do?
-  Why should your reader be interested?
+What are you going to do?
+Why should your reader be interested?
 Approach
-  What are the traditional approaches?
-  What approach are you going to take?
-  Why do you think it will work better?
-  What small experiments gave you confidence?
+What are the traditional approaches?
+What approach are you going to take?
+Why do you think it will work better?
+What small experiments gave you confidence?
 Methodology 
-  What SPECIFIC steps will you take?
-  Which of these steps are particularly hard?
-  What will you do if the hard steps don't work out?
+What SPECIFIC steps will you take?
+Which of these steps are particularly hard?
+What will you do if the hard steps don't work out?
 Metrics
-  How will you know you are done?
-  How will you measure success?
+How will you know you are done?
+How will you measure success?
 Summary
-  What will you learn by doing this project?
+What will you learn by doing this project?
 
 Adjust this as neccessary based on the scope or focus of your project
 and project area. Your proposal is intended to instill confidence in
@@ -444,8 +706,8 @@ already have some early evidence of initial success.
 I ask that you follow these general guidelines of a small
 proposal. Beyond merely content, we will also judge your prose itself
 as scientific writing. Consider, faute de mieux, the [following
-guidelines and
-references](http://writing.engr.psu.edu/checklists/proposal.html) as a
+                                                       guidelines and
+                                                       references](http://writing.engr.psu.edu/checklists/proposal.html) as a
 general outline for non-content criteria we will consider.
 
 
