@@ -289,7 +289,6 @@ ordered sets.
 ;; 4. Your task: implement an efficient (polynomial time) algorithm
 ;; SATP for deciding the satisfiability of an HSF sentence in our
 ;; format.
-;; JOE will take this
 
 #|
 
