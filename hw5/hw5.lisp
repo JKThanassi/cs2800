@@ -1,3 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 #|
 
 HW 5
@@ -31,6 +96,13 @@ variable occurrences. For a re-refresher see Ch 4. pp 76-77.
 
 |# 
 
+(definec var-occursp (v :var e :expr) :bool
+  (case-match e
+              (('* ex1 ex2) (or (var-occursp v ex1) (var-occursp v ex2)))
+              (('let ((& ex1)) ex2) (or (var-occursp v ex1) (var-occursp v ex2)))
+              (v-or-r (eq v-or-r v)))
+  )
+
 ;; 1. Define and test a procedure var-occurs-boundp that takes a
 ;; var and an expr and returns t if that variable occurs bound in
 ;; the expression, and nil otherwise. Do not use helper procedures
@@ -38,7 +110,10 @@ variable occurrences. For a re-refresher see Ch 4. pp 76-77.
 ;; method signature.
 
 (definec var-occurs-boundp (v :var e :expr) :bool
-  ...)
+(case-match e 
+            (('let ((!v &)) ex1) (var-occursp v ex1))
+            (('let ((& &)) ex1) (var-occurs-boundp v ex1))
+            (& nil)))
 
 (check= (var-occurs-boundp 'x 'x) nil)
 
@@ -51,24 +126,24 @@ variable occurrences. For a re-refresher see Ch 4. pp 76-77.
 (check= (var-occurs-boundp 'y '(let ((y 7)) 'y)) nil)
 
 (check= (var-occurs-boundp 'x '(let ((x (let ((x 5))
-					  x)))
-				 (let ((x x))
-				   x)))
-	t)
+                                          x)))
+                                 (let ((x x))
+                                   x)))
+        t)
 
 (check= (var-occurs-boundp 'x '(let ((x (* x x)))
-				 (* x x)))
-	t)
+                                 (* x x)))
+        t)
 
 (check= (var-occurs-boundp 'z '(let ((y (* x w)))
-				 (let ((x x))
-				   (* y z))))
-	nil)
+                                 (let ((x x))
+                                   (* y z))))
+        nil)
 
 (check= (var-occurs-boundp 'z '(let ((y 10))
-				 (let ((z y))
-				   (* y z))))
-	t)
+                                 (let ((z y))
+                                   (* y z))))
+        t)
 
 ;; 2. Define a function unique-free-vars that takes an expr and
 ;; returns a sorted list of all the variables that occur free in that
@@ -77,54 +152,60 @@ variable occurrences. For a re-refresher see Ch 4. pp 76-77.
 
 
 (definec unique-free-vars (e :expr) :tl
-  ...)
+(case-match e
+              (('* ex1 ex2) (set::mergesort (set::union (set::mergesort (unique-free-vars ex1)) 
+                                                        (set::mergesort (unique-free-vars ex2)))))
+              (('let ((v ex1)) ex2) (set::mergesort (set::union (set::mergesort (unique-free-vars ex1))
+                                                                (set::delete v (set::mergesort (unique-free-vars ex2))))))
+              (v-or-r (if (varp v-or-r) (list v-or-r) nil))
+))
 
 
 (check= (unique-free-vars 'x) '(x))
 (check= (unique-free-vars ''x) '())
 (check= (unique-free-vars '(let ((x 7)) (* x y)))
-	'(y))
+        '(y))
 (check= (unique-free-vars '(let ((x 10))
-			     (* (* x y) x)))
-	'(y))
+                             (* (* x y) x)))
+        '(y))
 (check= (unique-free-vars '(let ((x (* 10 10)))
-			     (* (* z y) x)))
-	'(y z))
+                             (* (* z y) x)))
+        '(y z))
 (check= (unique-free-vars '(let ((a 5))
-			     (let ((b a))
-			       (let ((c b))
-				 (let ((d c))
-				   (let ((e d))
-				     (* (* (* (* a b) c) d) e)))))))
-	'())
+                             (let ((b a))
+                               (let ((c b))
+                                 (let ((d c))
+                                   (let ((e d))
+                                     (* (* (* (* a b) c) d) e)))))))
+        '())
 (check= (unique-free-vars '(let ((x (let ((w 10))
-				      (* x y))))
-			     (let ((y x))
-			       y)))
-	'(x y))
+                                      (* x y))))
+                             (let ((y x))
+                               y)))
+        '(x y))
 (check= (unique-free-vars '(let ((x (let ((w 5))
-				      (* x y))))
-			     (let ((y x))
-			       (* x y))))
-	'(x y))
+                                      (* x y))))
+                             (let ((y x))
+                               (* x y))))
+        '(x y))
 (check= (unique-free-vars
          '(let ((x (let ((c 10))
-		     (* x (let ((x c))
-			    (* x (* e c)))))))
+                     (* x (let ((x c))
+                            (* x (* e c)))))))
             (* (* x y) e)))
-	'(e x y))
+        '(e x y))
 (check= (unique-free-vars
          '(let ((c (let ((x 10))
-		     (* (* x y) e))))
+                     (* (* x y) e))))
             (* x (let ((x 15))
-		   (* x (* e c))))))
-	'(e x y))
+                   (* x (* e c))))))
+        '(e x y))
 (check= (unique-free-vars '(let ((x 5))
-			     (let ((y x))
-			       (let ((x y))
-				 (let ((y x))
-				   (* (* x y) z))))))
-	'(z))
+                             (let ((y x))
+                               (let ((x y))
+                                 (let ((y x))
+                                   (* (* x y) z))))))
+        '(z))
 
 
 ;; 3. Define a function unique-bound-vars that takes an expr and
@@ -134,47 +215,57 @@ variable occurrences. For a re-refresher see Ch 4. pp 76-77.
 ;; above. Do not change the method signature.
 
 (definec unique-bound-vars (e :expr) :tl
-  ...)
+  (case-match e 
+              (('let ((v ex1)) ex2) (set::mergesort 
+                                     (set::union 
+                                      (set::mergesort (unique-bound-vars ex1)) 
+                                      (set::union 
+                                       (if (var-occursp v ex2) (set::mergesort (list v)) nil)
+                                       (set::mergesort (unique-bound-vars ex2))))))
+              (('* ex1 ex2) (set::mergesort (set::union (set::mergesort (unique-bound-vars ex1)) 
+                                                        (set::mergesort (unique-bound-vars ex2)))))
+              (& nil)))
 
 (check= (unique-bound-vars 'x) '())
 (check= (unique-bound-vars '(let ((x 5)) y)) '())
 (check= (unique-bound-vars '(let ((x 5)) (* x y)))
-	'(x))
+        '(x))
 (check= (unique-bound-vars '(let ((x 10)) (* (* x y) x)))
-	'(x))
+        '(x))
 (check= (unique-bound-vars '(let ((x 10)) (* (* z y) x)))
-	'(x))
+        '(x))
 (check= (unique-bound-vars '(let ((a 10))
-			      (let ((b a))
-				(let ((c b))
-				  (let ((d c))
-				    (let ((e d))
-				      (* (* (* (* a b) c) d) e)))))))
-	'(a b c d e))
+                              (let ((b a))
+                                (let ((c b))
+                                  (let ((d c))
+                                    (let ((e d))
+                                      (* (* (* (* a b) c) d) e)))))))
+        '(a b c d e))
 (check= (unique-bound-vars '(* 4 (let ((x (* 6 (let ((w 10))
-						 (* x y)))))
-				   (let ((y 10))
-				     y))))
-	'(y))
+                                                 (* x y)))))
+                                   (let ((y 10))
+                                     y))))
+        '(y))
 (check= (unique-bound-vars '(let ((x (let ((w x))
-				       (* x y))))
+                                       (* x y))))
                               (let ((y y))
-				(* x y))))
-	'(x y))
+                                (* x y))))
+        '(x y))
 (check= (unique-bound-vars '(let ((x (let ((c 'c))
-				       (* x (let ((x x))
-					      (* x (* e c)))))))
-			      (* (* x y) e)))
-	'(c x))
+                                       (* x (let ((x x))
+                                              (* x (* e c)))))))
+                              (* (* x y) e)))
+        '(c x))
 (check= (unique-bound-vars '(let ((c (let ((x 10))
-				       (* (* x y) e))))
+                                       (* (* x y) e))))
                               (* x (let ((x 10))
-				     (* x (* e c))))))
-	'(c x))
+                                     (* x (* e c))))))
+        '(c x))
 (check= (unique-bound-vars '(let ((x 10))
-			      (let ((x x))
-				x)))
-	'(x))
+                              (let ((x x))
+                                x)))
+        '(x))#|ACL2s-ToDo-Line|#
+
 
 
 #| 
