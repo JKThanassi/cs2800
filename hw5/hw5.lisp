@@ -339,7 +339,25 @@ Conjecture 5:
   (implies (endp ls)
     (equal (rev2 (rev2 ls)) ls)))
     
-...
+Exportation:
+(implies (and (tlp ls)
+              (endp ls))
+    (equal (rev2 (rev2 ls)) ls)))
+
+Context:
+C1. (tlp ls)
+C2. (endp ls)
+
+Derived Context:
+
+Goal: (equal (rev2 (rev2 ls)) ls)
+
+Proof:
+(rev2 (rev2 ls))
+= { C2, Def rev2 }
+(rev2 (ls))
+= { C2, Def rev2 }
+ls
 
 QED   
 
