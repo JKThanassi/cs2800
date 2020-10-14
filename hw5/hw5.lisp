@@ -348,8 +348,6 @@ Context:
 C1. (tlp ls)
 C2. (endp ls)
 
-Derived Context:
-
 Goal: (equal (rev2 (rev2 ls)) ls)
 
 Proof:
