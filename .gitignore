@@ -1,5 +1,6 @@
 .metadata/
 *.lisp.a2s
+console.log
 lab/
 .project
 /lab*
