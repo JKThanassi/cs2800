@@ -275,7 +275,8 @@ QED
     (cons (car ls) (cons (car ls) (stutter (cdr ls))))))
 
 ;; 5. e/o?
-(definec e/o? (flag :bool n :nat) :bool
+(definec e/o?2 (flag :bool n :nat) :bool
+  (declare (xargs :measure (me/o? flag n)))
   (cond
    (flag
     (cond
@@ -361,14 +362,3 @@ QED
 ;; C. Modify this function definition to include a measure for
 ;; termination. You could modify the function definition if you need,
 ;; but make sure it's equivalent
-(definec e/o?2 (flag :bool n :nat) :bool
-  (declare (xargs :measure (me/o? flag n)))
-  (cond
-   (flag
-    (cond
-     ((zp n) nil)
-     (t (e/o? (not flag) (1- n)))))
-   (t
-    (cond
-     ((zp n) t)
-     (t (e/o? (not flag) (1- n)))))))
