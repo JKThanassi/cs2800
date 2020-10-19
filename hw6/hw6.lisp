@@ -206,61 +206,35 @@ my (set-ignore-ok t) form.
 ;; 4. stutter
 
 ;; A. Define a measure function for this function definition
-(definec mapp2 (x :tl y :tl) :nat
-  (declare (ignorable y))
+(definec mstutter (ls :tl) :nat
   (len x))
 
 ;; B. Demonstrate via equational reasoning that this is a measure function (do the proofs)
 
 ;; Contract Thm
-(thm (implies (and (tlp x) (endp x) (tlp y))
-              (natp (mapp2 x y))))
+(thm (implies (tlp ls) (tlp (stutter ls))))
 
-;; Conjecture
-(thm (implies (and (tlp x) (endp x) (tlp y))
-              (= (mapp2 x y) 0)))
-
-(thm (implies (and (tlp x) (not (endp x)) (tlp y))
-              (< (mapp2 (cdr x) y) (mapp2 x y))))
+;; Conjecture 1
+(thm (implies (and (tlp ls) (not (endp ls)))
+              (< (mstutter (cdr ls)) (mstutter ls))))
 
 #|
 Termination Proof
 Conjecture 1:
-(implies (and (tlp x) (endp x) (tlp y))
-              (= (mapp2 x y) 0))
+(implies (and (tlp ls) (not (endp ls)))
+              (< (mstutter (cdr ls)) (mstutter ls)))
 
 Context:
-C1. (tlp x)
-C2. (endp x)
-C3. (tlp y)
+C1. (tlp ls)
+C2. (not (endp ls))
 
-Goals: (= (mapp2 x y) 0)
-
-Proof:
-(= (mapp2 x y) 0)
-= { Def mapp2 }
-(= (len x) 0)
-= { C2, Def len }
-true
-
-Conjecture 2:
-(implies (and (tlp x) (not (endp x)) (tlp y))
-              (< (mapp2 (cdr x) y) (mapp2 x y)))
-            
-Context:
-C1. (tlp x)
-C2. (not (endp x))
-C3. (tlp y)
-
-Goals: (< (mapp2 (cdr x) y) (mapp2 x y))
+Goal: (< (mstutter (cdr ls)) (mstutter ls))
 
 Proof:
-(< (mapp2 (cdr x) y) (mapp2 x y))
-= { Def mapp2 }
-(< (len (cdr x)) (len x))
+(< (mstutter (cdr ls)) (mstutter ls))
+= { Def mstutter }
+(< (len (cdr ls)) (len ls))
 = { C2, Def len }
-(< (1- (len x)) (len x))
-= { Arithm }
 t
 
 QED
@@ -269,23 +243,12 @@ QED
 ;; C. Modify this function definition to include a measure for termination
 
 (definec stutter (ls :tl) :tl
-  (declare (xargs :measure (len ls)))
+  (declare (xargs :measure (if (tlp ls) (mstutter ls) 0)))
   (if (endp ls)
       ls
     (cons (car ls) (cons (car ls) (stutter (cdr ls))))))
 
 ;; 5. e/o?
-(definec e/o? (flag :bool n :nat) :bool
-  (declare (xargs :measure (if (zp n) 0 (1+ n))))
-  (cond
-   (flag
-    (cond
-     ((zp n) nil)
-     (t (e/o? (not flag) (1- n)))))
-   (t
-    (cond
-     ((zp n) t)
-     (t (e/o? (not flag) (1- n)))))))
 
 ;; A. Define a measure function for this function definition
 (definec me/o? (flag :bool n :nat) :nat
@@ -359,3 +322,15 @@ QED
 ;; C. Modify this function definition to include a measure for
 ;; termination. You could modify the function definition if you need,
 ;; but make sure it's equivalent
+
+(definec e/o? (flag :bool n :nat) :bool
+  (declare (xargs :measure (if (zp n) 0 (1+ n))))
+  (cond
+   (flag
+    (cond
+     ((zp n) nil)
+     (t (e/o? (not flag) (1- n)))))
+   (t
+    (cond
+     ((zp n) t)
+     (t (e/o? (not flag) (1- n)))))))
