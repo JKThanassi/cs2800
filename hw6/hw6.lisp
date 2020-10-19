@@ -275,19 +275,6 @@ QED
     (cons (car ls) (cons (car ls) (stutter (cdr ls))))))
 
 ;; 5. e/o?
-
-;; A. Define a measure function for this function definition
-
-;; B. Demonstrate via equational reasoning that this is a measure function (do the proofs)
-
-#|  
-
-|# 
-
-;; C. Modify this function definition to include a measure for
-;; termination. You could modify the function definition if you need,
-;; but make sure it's equivalent
-
 (definec e/o? (flag :bool n :nat) :bool
   (cond
    (flag
@@ -299,3 +286,89 @@ QED
      ((zp n) t)
      (t (e/o? (not flag) (1- n)))))))
 
+;; A. Define a measure function for this function definition
+(definec me/o? (flag :bool n :nat) :nat
+  (declare (ignorable flag))
+  (if (zp n) 0 (1+ n)))
+
+;; B. Demonstrate via equational reasoning that this is a measure function (do the proofs)
+
+;; Contract Thm
+(thm (implies (and (boolp flag) (natp n))
+              (boolp (e/o? flag n))))
+
+;; Conjecture
+(thm (implies (and (boolp flag) (natp n) (zp n))
+              (= 0 (me/o? flag n))))
+
+(thm (implies (and (boolp flag) (natp n) (not (zp n)))
+              (< (me/o? flag (1- n)) (me/o? flag n))))#|ACL2s-ToDo-Line|#
+
+
+#|
+Termination Proof
+Conjecture 1:
+(implies (and (boolp flag) (natp n) (zp n))
+              (= 0 (me/o? flag n)))
+              
+Context:
+C1. (boolp flag)
+C2. (natp n)
+C3. (zp n)
+
+Goals: (= 0 (me/o? flag n))
+
+Proof:
+(= 0 (me/o? flag n))
+= { Def me/o? }
+(= 0 (if (zp n) 0 (1+ n)))
+= { C3, Arithm }
+t
+
+Conjecture 2:
+(implies (and (boolp flag) (natp n) (not (zp n)))
+              (< (me/o? flag (1- n)) (me/o? flag n)))
+
+Context: 
+C1. (boolp flag)
+C2. (natp n)
+C3. (not (zp n))
+
+Goals: (< (me/o? flag (1- n)) (me/o? flag n))
+
+Proof:
+(< (me/o? flag (1- n)) (me/o? flag n))
+= { Def me/o? }
+(< (if (zp (1- n)) 0 (1+ (1- n))) (if (zp n) 0 (1+ n)))
+= { Arithm, Substitution }
+(< (if (zp (1- n)) 0 n) (if (zp n) 0 (1+ n)))
+= { C3 }
+(< (if (zp (1- n)) 0 n) (1+ n))
+= { Def <, if-axioms }
+(if (zp (1- n))
+    (< 0 (1+ n))
+    (< n (1+ n)))
+= { C3, Arithm }
+(if (zp (1- n))
+    t
+    t)
+= { if-axioms }
+t
+
+QED
+|#
+
+;; C. Modify this function definition to include a measure for
+;; termination. You could modify the function definition if you need,
+;; but make sure it's equivalent
+(definec e/o?2 (flag :bool n :nat) :bool
+  (declare (xargs :measure (me/o? flag n)))
+  (cond
+   (flag
+    (cond
+     ((zp n) nil)
+     (t (e/o? (not flag) (1- n)))))
+   (t
+    (cond
+     ((zp n) t)
+     (t (e/o? (not flag) (1- n)))))))
