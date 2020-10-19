@@ -158,6 +158,7 @@ B. If you claim the function is not admissible, identify a condition
 ;; (> (+ (+ 1 (len (rest l)) 1) (+ (len (rest l)) 1)))
 ;; = { arith }
 ;; (> (+ 2 (len (rest l)) (+ 1 (len (rest l)))))
+;; QED
 
 
 #| 
@@ -324,7 +325,7 @@ QED
 ;; but make sure it's equivalent
 
 (definec e/o? (flag :bool n :nat) :bool
-  (declare (xargs :measure (if (zp n) 0 (1+ n))))
+  (declare (xargs :measure (if (and (boolp flag) (natp n)) (me/o? flag n) 0)))
   (cond
    (flag
     (cond
