@@ -351,7 +351,7 @@ QED
 ;; termination. You could modify the function definition if you need,
 ;; but make sure it's equivalent
 (definec e/o? (flag :bool n :nat) :bool
-  (declare (xargs :measure (me/o? flag n)))
+  (declare (xargs :measure (if (and (boolp flag) (natp n)) (me/o? flag n) 0)))
   (cond
    (flag
     (cond
