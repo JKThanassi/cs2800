@@ -275,8 +275,8 @@ QED
     (cons (car ls) (cons (car ls) (stutter (cdr ls))))))
 
 ;; 5. e/o?
-(definec e/o?2 (flag :bool n :nat) :bool
-  (declare (xargs :measure (me/o? flag n)))
+(definec e/o? (flag :bool n :nat) :bool
+  (declare (xargs :measure (if (zp n) 0 (1+ n))))
   (cond
    (flag
     (cond
@@ -289,11 +289,9 @@ QED
 
 ;; A. Define a measure function for this function definition
 (definec me/o? (flag :bool n :nat) :nat
-  (declare (ignorable flag))
   (if (zp n) 0 (1+ n)))
 
 ;; B. Demonstrate via equational reasoning that this is a measure function (do the proofs)
-
 ;; Contract Thm
 (thm (implies (and (boolp flag) (natp n))
               (boolp (e/o? flag n))))
@@ -303,8 +301,7 @@ QED
               (= 0 (me/o? flag n))))
 
 (thm (implies (and (boolp flag) (natp n) (not (zp n)))
-              (< (me/o? flag (1- n)) (me/o? flag n))))#|ACL2s-ToDo-Line|#
-
+              (< (me/o? flag (1- n)) (me/o? flag n))))
 
 #|
 Termination Proof
