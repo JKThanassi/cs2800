@@ -207,16 +207,16 @@ my (set-ignore-ok t) form.
 
 ;; A. Define a measure function for this function definition
 (definec mstutter (ls :tl) :nat
-  (len x))
+  (len ls))
 
 ;; B. Demonstrate via equational reasoning that this is a measure function (do the proofs)
 
 ;; Contract Thm
-(thm (implies (tlp ls) (tlp (stutter ls))))
+;(thm (implies (tlp ls) (tlp (stutter ls))))
 
 ;; Conjecture 1
-(thm (implies (and (tlp ls) (not (endp ls)))
-              (< (mstutter (cdr ls)) (mstutter ls))))
+;(thm (implies (and (tlp ls) (not (endp ls)))
+;              (< (mstutter (cdr ls)) (mstutter ls))))
 
 #|
 Termination Proof
@@ -256,15 +256,15 @@ QED
 
 ;; B. Demonstrate via equational reasoning that this is a measure function (do the proofs)
 ;; Contract Thm
-(thm (implies (and (boolp flag) (natp n))
-              (boolp (e/o? flag n))))
+;(thm (implies (and (boolp flag) (natp n))
+;              (boolp (e/o? flag n))))
 
 ;; Conjecture
-(thm (implies (and (boolp flag) (natp n) (zp n))
-              (= 0 (me/o? flag n))))
+;(thm (implies (and (boolp flag) (natp n) (zp n))
+;              (= 0 (me/o? flag n))))
 
-(thm (implies (and (boolp flag) (natp n) (not (zp n)))
-              (< (me/o? flag (1- n)) (me/o? flag n))))
+;(thm (implies (and (boolp flag) (natp n) (not (zp n)))
+;              (< (me/o? flag (1- n)) (me/o? flag n))))
 
 #|
 Termination Proof
