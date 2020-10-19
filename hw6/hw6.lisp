@@ -206,16 +206,70 @@ my (set-ignore-ok t) form.
 ;; 4. stutter
 
 ;; A. Define a measure function for this function definition
+(definec mapp2 (x :tl y :tl) :nat
+  (declare (ignorable y))
+  (len x))
 
 ;; B. Demonstrate via equational reasoning that this is a measure function (do the proofs)
 
-#|  
+;; Contract Thm
+(thm (implies (and (tlp x) (endp x) (tlp y))
+              (natp (mapp2 x y))))
 
-|# 
+;; Conjecture
+(thm (implies (and (tlp x) (endp x) (tlp y))
+              (= (mapp2 x y) 0)))
+
+(thm (implies (and (tlp x) (not (endp x)) (tlp y))
+              (< (mapp2 (cdr x) y) (mapp2 x y))))
+
+#|
+Termination Proof
+Conjecture 1:
+(implies (and (tlp x) (endp x) (tlp y))
+              (= (mapp2 x y) 0))
+
+Context:
+C1. (tlp x)
+C2. (endp x)
+C3. (tlp y)
+
+Goals: (= (mapp2 x y) 0)
+
+Proof:
+(= (mapp2 x y) 0)
+= { Def mapp2 }
+(= (len x) 0)
+= { C2, Def len }
+true
+
+Conjecture 2:
+(implies (and (tlp x) (not (endp x)) (tlp y))
+              (< (mapp2 (cdr x) y) (mapp2 x y)))
+            
+Context:
+C1. (tlp x)
+C2. (not (endp x))
+C3. (tlp y)
+
+Goals: (< (mapp2 (cdr x) y) (mapp2 x y))
+
+Proof:
+(< (mapp2 (cdr x) y) (mapp2 x y))
+= { Def mapp2 }
+(< (len (cdr x)) (len x))
+= { C2, Def len }
+(< (1- (len x)) (len x))
+= { Arithm }
+t
+
+QED
+|#
 
 ;; C. Modify this function definition to include a measure for termination
 
 (definec stutter (ls :tl) :tl
+  (declare (xargs :measure (len ls)))
   (if (endp ls)
       ls
     (cons (car ls) (cons (car ls) (stutter (cdr ls))))))
