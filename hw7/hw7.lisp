@@ -40,13 +40,13 @@ B. If you claim the function is not admissible, identify a condition
 
 ;; 1
  
-(definec f1 (x :nat y :nat z :nat) :nat
-  (cond
-    ((and (equal x 0) (equal y 0) (equal z 0)) 0)
-    ((and (<= x y) (<= x z)) (f1 (- x 1) (- y 1) (- z 1)))
-    ((and (<= y x) (<= y z)) (f1 (- x 1) (- y 1) (- z 1)))
-    ((and (<= z x) (<= z y)) (f1 (- x 1) (- y 1) (- z 1)))
-    (t 0)))
+;;(definec f1 (x :nat y :nat z :nat) :nat
+;;  (cond
+;;    ((and (equal x 0) (equal y 0) (equal z 0)) 0)
+;;    ((and (<= x y) (<= x z)) (f1 (- x 1) (- y 1) (- z 1)))
+;;    ((and (<= y x) (<= y z)) (f1 (- x 1) (- y 1) (- z 1)))
+;;    ((and (<= z x) (<= z y)) (f1 (- x 1) (- y 1) (- z 1)))
+;;    (t 0)))
 
 #| 
 
@@ -65,14 +65,37 @@ B.
         (f2 x (rest y) (cons (first y) acc)))
     (f2 (rest x) y (cons (first x) acc))))
 
-#| 
 
-A.
+;; A. The function is admissible.
+;; The measure function is as follows:
 
-B.
+(definec m-f2 (x :tl y :tl acc :tl) :nat
+         (+ (len x) (len y)))
 
-|#
+;; proof as follows
+;; Conjecture 1:
+(implies (and (tlp x) (tlp y) (tlp acc))
+         (> (m-f2 x y acc) (m-f2 (rest x) y acc)))
+;; Context:
+;; C1. (tlp x)
+;; C2. (tlp y)
+;; C3. (tlp acc)
+;; C4. (not (endp x))
+;; C5. (not (endp y))
+;;
+;; Goal:
+(> (m-f2 x y acc) (m-f2 (rest x) y acc))
 
+;; Proof:
+;; (> (m-f2 x y acc) (m-f2 (rest x) y acc))
+;; = { def m-f2 }
+;; (> (+ (len x) (len y)) (+ (len (rest x)) (len y)))
+;; = { lemma cons-size, if-axioms }
+;; (> (+ (+ 1 (len (rest x))) (len y)) (+ (len (rest x)) (len y)))
+;; = { arith }
+;; True
+;; QED
+;;
 ;; 3
 
 (definec f3 (x :tl y :tl acc :tl) :tl
