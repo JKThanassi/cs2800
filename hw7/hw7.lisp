@@ -108,7 +108,7 @@ B.
 |#
 
 ;; 5
-
+;; Commented out because ACL2S won't accept it
 (definec f5 (x :nat l :tl a :all) :all
   (cond
     ((endp l) a)
@@ -117,13 +117,129 @@ B.
     ((> x (len l)) (f5 (/ x 2) l x))
     (t (f5 x (rest l) (first l)))))
 
-#| 
 
-A.
-
-B.
-
+;; Measure Function
 |#
+
+(definec m5 (x :nat l :tl a :all) :nat
+  (declare (ignorable a))
+  (cond ((endp l) 0)
+        ((== x 0) 0)
+        (t (+ x (len l)))))
+
+;; Admissable
+
+;; Contract Theorem
+
+(thm (implies (and (natp x) (tlp l) (allp a))
+              (natp (f5 x l a))))
+
+;; Conjectures
+(thm (implies (and (natp x)
+                   (tlp l)
+                   (allp a)
+                   (not (endp l))
+                   (not (== x 0))
+                   (not (oddp x))
+                   (> x (len l)))
+              (< (m5 (/ x 2) l x) (m5 x l a))))
+
+(thm (implies (and (natp x)
+                   (tlp l)
+                   (allp a)
+                   (not (endp l))
+                   (not (== x 0))
+                   (not (oddp x))
+                   (not (> x (len l))))
+              (< (m5 x (rest l) (first l)) (m5 x l a))))
+
+;; Proof
+; Conjecture 1
+(implies (and (natp x)
+              (tlp l)
+              (allp a)
+              (not (endp l))
+              (not (== x 0))
+              (not (oddp x))
+              (> x (len l)))
+         (< (m5 (/ x 2) l x) (m5 x l a)))
+
+; Context
+C1. (natp x)
+C2. (tlp l) 
+C3. (allp a)
+C4. (not (endp l))
+C5. (not (== x 0))
+C6. (not (oddp x))
+C7. (> x (len l))
+
+; Derived COntext
+D1. (implies (and (natp x) (not (== x 0))) (< (/ x 2) x)) { Def /, C1, C5, C6 }
+
+; Goal: (< (m5 (/ x 2) l x) (m5 x l a))
+
+; Proof
+(< (m5 (/ x 2) l x) (m5 x l a))
+= { Def m5 }
+(< (cond ((endp l) 0)
+         ((== (/ x 2) 0) 0)
+         (t (+ (/ x 2) (len l))))
+   (cond ((endp l) 0)
+         ((== x 0) 0)
+         (t (+ x (len l))))
+= { C4, C5 }
+(< (+ (/ x 2) (len l))
+   (+ x (len l)))
+= { Arithm }
+(< (/ x 2) x)
+= { D1 }
+t
+
+; Conjecture 2
+(implies (and (natp x)
+              (tlp l)
+              (allp a)
+              (not (endp l))
+              (not (== x 0))
+              (not (oddp x))
+              (not (> x (len l))))
+         (< (m5 x (rest l) (first l)) (m5 x l a)))
+
+; Context
+C1. (natp x)
+C2. (tlp l) 
+C3. (allp a)
+C4. (not (endp l))
+C5. (not (== x 0))
+C6. (not (oddp x))
+C7. (not (> x (len l)))
+
+; Derived Context
+D1. (implies (and (not (oddp x)) (not (== x 0)) (not (> x (len l))))
+             (and (> x 1) (> (len l) 2) (not (endp (rest l))))) { Arith, C4, C5, C6, C7 }
+
+; Goal: (< (m5 x (rest l) (first l)) (m5 x l a))
+
+; Proof
+(< (m5 x (rest l) (first l)) (m5 x l a))
+= { Def m5 }
+(< (cond ((endp (rest l)) 0)
+         ((== x 0) 0)
+         (t (+ x (len (rest l)))))
+   (cond ((endp l) 0)
+         ((== x 0) 0)
+         (t (+ x (len l))))
+= { C4, C5, D1 }
+(< (+ x (len (rest l)))
+   (+ x (len l)))
+= { Arith }
+(< (len (rest l)) (len l))
+= { Def rest, Def len, C4 }
+t
+
+QED
+|#
+
 
 #| BONUS PROBLEM 
 
