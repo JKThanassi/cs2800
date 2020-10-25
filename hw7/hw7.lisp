@@ -40,13 +40,13 @@ B. If you claim the function is not admissible, identify a condition
 
 ;; 1
  
-(definec f1 (x :nat y :nat z :nat) :nat
-  (cond
-    ((and (equal x 0) (equal y 0) (equal z 0)) 0)
-    ((and (<= x y) (<= x z)) (f1 (- x 1) (- y 1) (- z 1)))
-    ((and (<= y x) (<= y z)) (f1 (- x 1) (- y 1) (- z 1)))
-    ((and (<= z x) (<= z y)) (f1 (- x 1) (- y 1) (- z 1)))
-    (t 0)))
+;;(definec f1 (x :nat y :nat z :nat) :nat
+;;  (cond
+;;    ((and (equal x 0) (equal y 0) (equal z 0)) 0)
+;;    ((and (<= x y) (<= x z)) (f1 (- x 1) (- y 1) (- z 1)))
+;;    ((and (<= y x) (<= y z)) (f1 (- x 1) (- y 1) (- z 1)))
+;;    ((and (<= z x) (<= z y)) (f1 (- x 1) (- y 1) (- z 1)))
+;;    (t 0)))
 
 #| 
 
@@ -67,15 +67,26 @@ B.
 
 
 ;; A. The function is admissible.
+
+;; Contract thm IC => OC
+
+(thm (implies (and (tlp x) (tlp y) (tlp acc))
+              (tlp (f2 x y acc))))
+
+;; Contract thm IC-f2 => IC-m-f2
+(thm (implies (and (tlp x) (tlp y) (tlp acc))
+              (and (tlp x) (tlp y))))
+
 ;; The measure function is as follows:
 
 (definec m-f2 (x :tl y :tl acc :tl) :nat
+  (declare (ignorable acc))
          (+ (len x) (len y)))
 
 ;; proof as follows
 ;; Conjecture 1:
-(implies (and (tlp x) (tlp y) (tlp acc))
-         (> (m-f2 x y acc) (m-f2 (rest x) y acc)))
+(thm (implies (and (tlp x) (tlp y) (tlp acc) (not (endp x)) (not (endp y)))
+         (> (m-f2 x y acc) (m-f2 (rest x) y acc))))
 ;; Context:
 ;; C1. (tlp x)
 ;; C2. (tlp y)
@@ -84,7 +95,7 @@ B.
 ;; C5. (not (endp y))
 ;;
 ;; Goal:
-(> (m-f2 x y acc) (m-f2 (rest x) y acc))
+;; (> (m-f2 x y acc) (m-f2 (rest x) y acc))
 
 ;; Proof:
 ;; (> (m-f2 x y acc) (m-f2 (rest x) y acc))
