@@ -48,11 +48,10 @@ B. If you claim the function is not admissible, identify a condition
     ((and (<= z x) (<= z y)) (f1 (- x 1) (- y 1) (- z 1)))
     (t 0)))
 
-#| 
+#|
 
-A.
-
-B.
+A. The function is not admissible. Counterexample: 
+((X 0) (Y 5) (Z 812))
 
 |#
 
