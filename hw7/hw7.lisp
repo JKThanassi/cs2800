@@ -173,7 +173,7 @@ C5. (not (== x 0))
 C6. (not (oddp x))
 C7. (> x (len l))
 
-; Derived COntext
+; Derived Context
 D1. (implies (and (natp x) (not (== x 0))) (< (/ x 2) x)) { Def /, C1, C5, C6 }
 
 ; Goal: (< (m5 (/ x 2) l x) (m5 x l a))
