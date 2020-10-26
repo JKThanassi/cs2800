@@ -117,7 +117,92 @@ A. The function is not admissible. Counterexample:
 
 #| 
 
-A.
+A. Admissible
+
+;; a) Generalized Measure Function
+(definec mf3 (x :tl y :tl) :nat
+  (+ (len x) (len y)))
+  
+;; f3 IC => mf3 IC
+(implies (and (tlp x) (tlp y) (tlp acc))
+         (and (tlp x) (tlp y)))
+
+;; b) Contract Theorem
+(implies (and (tlp x) (tlp y) (tlp acc))
+         (tlp (f3 x y acc)))
+
+;; c) Termination Proofs
+Conjecture 1:
+(implies (and (tlp x) (tlp y) (tlp acc) (endp x) (consp y))
+         (< (mf3 x (rest y)) (mf3 x y)))
+Context:
+C1. (tlp x)
+C2. (tlp y)
+C3. (tlp acc)
+C4. (endp x)
+C5. (consp y) 
+
+Goal: (< (mf3 x (rest y)) (mf3 x y))
+
+Proof:
+(< (mf3 x (rest y)) (mf3 x y))
+= { Def mf3, C1, C2, C4, C5 }
+(< (+ (len x) (len (rest y))) (+ (len x) (len y)))
+= { Def len, C4, C5 }
+(< (+ 0 (len (rest y))) (+ 0 (len y)))
+= { arith, cons-size axiom }
+(< (1- (len y)) (len y))
+= { arith }
+(< -1 0)
+QED
+
+Conjecture 2:
+(implies (and (tlp x) (tlp y) (tlp acc) (consp x) (endp y))
+         (< (mf3 (rest x) y) (mf3 x y)))
+Context:
+C1. (tlp x)
+C2. (tlp y)
+C3. (tlp acc)
+C4. (endp x)
+C5. (consp y) 
+
+Goal: (< (mf3 (rest x) y) (mf3 x y))
+
+Proof:
+(< (mf3 (rest x) y) (mf3 x y))
+= { Def mf3, C1, C2, C4, C5 }
+(< (+ (len (rest x)) (len y)) (+ (len x) (len y)))
+= { Def len, C4, C5 }
+(< (+ (len (rest x)) 0) (+ (len x) 0))
+= { arith, cons-size axiom }
+(< (1- (len x)) (len x))
+= { arith }
+(< -1 0)
+QED
+
+Conjecture 3:
+(implies (and (tlp x) (tlp y) (tlp acc) (consp x) (consp y))
+         (< (mf3 x nil) (mf3 x y)))
+Context:
+C1. (tlp x)
+C2. (tlp y)
+C3. (tlp acc)
+C4. (consp x)
+C5. (consp y)
+
+Goal: (< (mf3 x nil) (mf3 x y))
+
+Proof:
+(< (mf3 x nil) (mf3 x y))
+= { Def mf3, C1, C2, C4, C5 }
+(< (+ (len x) (len nil)) (+ (len x) (len y)))
+= { Def len, C4, C5 }
+(< (+ (len x) 0) (+ (len x) (len y)))
+= { arith }
+(< (len x) (+ (len x) (len y)))
+= { C5, arith }
+(< 0 (len y))
+QED
 
 B.
 
@@ -125,16 +210,99 @@ B.
 
 ;; 4
 
-(definec f4 (x :tl y :tl acc :tl) :tl
-  (cond
-    ((and (endp x) (endp y)) acc)
-    ((endp x) (f4 x (rest y) (cons (first y) acc)))
-    ((endp y) (f4 y x acc))
-    (t (f4 x nil (f4 acc nil y)))))
+;(definec f4 (x :tl y :tl acc :tl) :tl
+;  (cond
+;    ((and (endp x) (endp y)) acc)
+;    ((endp x) (f4 x (rest y) (cons (first y) acc)))
+;    ((endp y) (f4 y x acc))
+;    (t (f4 x nil (f4 acc nil y)))))
 
 #| 
 
-A.
+A. Admissible (commented out because ACL2S would not accept it)
+
+;; a) Generalized Measure Function
+(definec mf4 (x :tl y :tl acc :all) :nat
+  (cond 
+   ((endp x) (len y))
+   ((endp y) (1+ (len x)))
+   (t (+ 2 (len acc) (len x)))))
+   
+;; f4 IC => mf4 IC
+(implies (and (tlp x) (tlp y) (tlp acc))
+         (and (tlp x) (tlp y) (allp acc)))
+
+;; b) Contract Theorem
+(implies (and (tlp x) (tlp y) (tlp acc))
+         (tlp (f4 x y acc)))
+
+;; c) Termination Proofs
+Conjecture 1:
+(implies (and (tlp x) (tlp y) (tlp acc) (endp x) (consp y))
+         (< (mf4 x (rest y) (cons (first y) acc)) (mf4 x y acc)))
+Context:
+C1. (tlp x)
+C2. (tlp y)
+C3. (tlp acc)
+C4. (endp x)
+C5. (consp y)
+
+Goal: (< (mf4 x (rest y) (cons (first y) acc)) (mf4 x y acc))
+
+Proof:
+(< (mf4 x (rest y) (cons (first y) acc)) (mf4 x y acc))
+= { Def mf4, C1, C2, C3, C4, C5 }
+(< (len (rest y)) (len y))
+= { cons-size axiom, C5 }
+(< (1- (len y)) (len y))
+= { arith }
+(< -1 0)
+QED
+
+Conjecture 2:
+(implies (and (tlp x) (tlp y) (tlp acc) (consp x) (endp y))
+         (< (mf4 y x acc) (mf4 x y acc)))
+Context:
+C1. (tlp x)
+C2. (tlp y)
+C3. (tlp acc)
+C4. (consp x)
+C5. (endp y)
+
+Goal: (< (mf4 y x acc) (mf4 x y acc))
+
+Proof:
+(< (mf4 y x acc) (mf4 x y acc))
+= { Def mf4, C1, C2, C3, C4, C5 }
+(< (1+ (len y)) (1+ (len x)))
+= { Def len, C5 }
+(< (1+ 0) (1+ (len x)))
+= { arith, C4 }
+(< 0 (len x))
+QED
+
+Conjecture 3:
+(implies (and (tlp x) (tlp y) (tlp acc) (consp x) (consp y))
+         (< (mf4 x nil (mf4 acc nil y)) (mf4 x y acc)))
+Context:
+C1. (tlp x)
+C2. (tlp y)
+C3. (tlp acc)
+C4. (consp x)
+C5. (consp y)
+
+Derived Context:
+D1. (allp (mf4 acc nil y)) { mf4 output contract }
+
+Goal: (< (mf4 x nil (mf4 acc nil y)) (mf4 x y acc))
+
+Proof:
+(< (mf4 x nil (mf4 acc nil y)) (mf4 x y acc))
+= { Def mf4, C1, C2, C3, C4, C5, D1 }
+(< (1+ (len x)) (+ 2 (len acc) (len x)))
+= { arith, C3 }
+(< 0 (1+ (len acc)))
+QED
 
 B.
 
