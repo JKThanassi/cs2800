@@ -65,14 +65,48 @@ B.
         (f2 x (rest y) (cons (first y) acc)))
     (f2 (rest x) y (cons (first x) acc))))
 
-#| 
 
-A.
+;; A. The function is admissible.
 
-B.
+;; Contract thm IC => OC
 
-|#
+(thm (implies (and (tlp x) (tlp y) (tlp acc))
+              (tlp (f2 x y acc))))
 
+;; Contract thm IC-f2 => IC-m-f2
+(thm (implies (and (tlp x) (tlp y) (tlp acc))
+              (and (tlp x) (tlp y))))
+
+;; The measure function is as follows:
+
+(definec m-f2 (x :tl y :tl acc :tl) :nat
+  (declare (ignorable acc))
+         (+ (len x) (len y)))
+
+;; proof as follows
+;; Conjecture 1:
+(thm (implies (and (tlp x) (tlp y) (tlp acc) (not (endp x)) (not (endp y)))
+         (> (m-f2 x y acc) (m-f2 (rest x) y acc))))
+;; Context:
+;; C1. (tlp x)
+;; C2. (tlp y)
+;; C3. (tlp acc)
+;; C4. (not (endp x))
+;; C5. (not (endp y))
+;;
+;; Goal:
+;; (> (m-f2 x y acc) (m-f2 (rest x) y acc))
+
+;; Proof:
+;; (> (m-f2 x y acc) (m-f2 (rest x) y acc))
+;; = { def m-f2 }
+;; (> (+ (len x) (len y)) (+ (len (rest x)) (len y)))
+;; = { lemma cons-size, if-axioms }
+;; (> (+ (+ 1 (len (rest x))) (len y)) (+ (len (rest x)) (len y)))
+;; = { arith }
+;; True
+;; QED
+;;
 ;; 3
 
 (definec f3 (x :tl y :tl acc :tl) :tl
