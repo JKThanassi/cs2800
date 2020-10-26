@@ -40,13 +40,13 @@ B. If you claim the function is not admissible, identify a condition
 
 ;; 1
  
-;;(definec f1 (x :nat y :nat z :nat) :nat
-;;  (cond
-;;    ((and (equal x 0) (equal y 0) (equal z 0)) 0)
-;;    ((and (<= x y) (<= x z)) (f1 (- x 1) (- y 1) (- z 1)))
-;;    ((and (<= y x) (<= y z)) (f1 (- x 1) (- y 1) (- z 1)))
-;;    ((and (<= z x) (<= z y)) (f1 (- x 1) (- y 1) (- z 1)))
-;;    (t 0)))
+(definec f1 (x :nat y :nat z :nat) :nat
+  (cond
+    ((and (equal x 0) (equal y 0) (equal z 0)) 0)
+    ((and (<= x y) (<= x z)) (f1 (- x 1) (- y 1) (- z 1)))
+    ((and (<= y x) (<= y z)) (f1 (- x 1) (- y 1) (- z 1)))
+    ((and (<= z x) (<= z y)) (f1 (- x 1) (- y 1) (- z 1)))
+    (t 0)))
 
 #| 
 
