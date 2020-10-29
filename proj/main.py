@@ -1,12 +1,14 @@
 from ortools.sat.python import cp_model
+from typing import List
 
-def solve_n(board_size):
+
+def solve_n(board_size: int):
     board = cp_model.CpModel()
-    # initializing board position variables 
+    # initializing board position variables
     queens_on_board = [
         [board.NewBoolVar(f"pos{i},{j}") for j in range(board_size)]
         for i in range(board_size)
-    ]
+    ]  # type: List[List[cp_model.IntVar]]
 
     for i in range(board_size):
         # Set the XOr constraint on row[i] for each row in queens_on_board
@@ -22,13 +24,13 @@ def solve_n(board_size):
 
     # Every true value represents a queen on the board of size N
     # create constraints 
-    #1. No more than N variables can be true
-    #2. No two "true" variables can have the same i value
-    #3. No two "true" variables can have the same j value
-    #4. No two "true" variables can have (i,x - j,x) == (i,y - j,y)
+    # 1. No more than N variables can be true
+    # 2. No two "true" variables can have the same i value
+    # 3. No two "true" variables can have the same j value
+    # 4. No two "true" variables can have (i,x - j,x) == (i,y - j,y)
 
     # For each row, the sum of the booleans is exactly 1
-    
+
 
 if __name__ == "__main__":
     solve_n(int(input("Number of queens!")))
