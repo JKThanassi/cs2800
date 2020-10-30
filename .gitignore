@@ -4,3 +4,5 @@ console.log
 lab/
 .project
 /lab*
+.vscode/
+.idea/
