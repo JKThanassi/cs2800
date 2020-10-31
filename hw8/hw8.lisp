@@ -244,10 +244,54 @@ obvious point us to what each piece is accomplishing.
 
 #| 
 
-Title: 
-Authors: 
+Title: The Busy Beaver Blues
+Authors: Sam Pontier
+
+The busy beaver problem is pondered by many fools.
+The maximum number of steps in a Turing machine with N rules
+Is what this problem seeks to find.
+So why has a sequence not yet been defined?
+
+How could we find the busiest beaver of all?
+This task, you see, is not so small.
+The haulting problem ruins our fun
+As we search for an answer, but find none.
+
+Suppose busy beaver of A was something we knew.
+We'd run all Turing machines with A rules through.
+Some might hault before busy beaver of A,
+The rest would never hault, we'd say.
+
+Thus the halting problem would be solved
+And our ideas of numbers, completely evolved.
+Though we know this can't be, so what does it mean?
+Will a solution to the busy beaver problem ever be seen?
+
+Not today, and not by you or me.
+It would take a new kind of computer, you see.
+Growing faster than any computable sequence known,
+The busy beavers problem is undecidable, as I have shown.
 
 
 Commentary: 
+
+Stanza 1: The busy beaver problem seeks to find the maximum number 
+			of steps in non-haulting Turning machines that have N rules.
+	
+Stanza 2: Introduces the correlation between this problem and the haulting 
+			problem (which we know is undecidable).
+			
+Stanza 3: If we knew the solution of the busy beaver problem for a number A,
+			BB(A). We could start all Turing machines with A rules and see 
+			how many hault by BB(A). Any machines that have not haulted by 
+			then never will, because the maximum number of steps in a haulting 
+			machine is BB(A) and these machines will have surpassed that.
+			
+Stanza 4: Due to the above findings, we see that this would have solved the 
+			haulting problem, which we know is undecidable.
+			Therefore, contradiction. 
+			
+Stanza 5: Just restating that the problem is undecidable and serving up a nice
+			mic drop to finish it off. QED
 
 |# 
