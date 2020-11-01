@@ -2,30 +2,47 @@ import argparse
 import time
 from typing import List, Union
 
-from ortools.sat.python.cp_model import CpModel, CpSolver, CpSolverSolutionCallback, IntVar, _SumArray
+from ortools.sat.python.cp_model import CpModel, CpSolver, CpSolverSolutionCallback, _SumArray
 
 
 class NQueensSolver(object):
-    def __init__(self, num_queens: int, printer: bool):
+    def __init__(self,
+                 num_queens: int,
+                 printer: bool):
+        # Initialize model and solver
         self._cp_model = CpModel()
         self._cp_solver = CpSolver()
+
         self._num_queens = num_queens
         self._indices = range(num_queens)
-        self._board = [
-            [self._add_new_spot(i, j) for i in self._indices]
-            for j in self._indices
-        ]  # type:List[List[CpModel.NewIntVar]]
 
+        # Initialize the board
+        self._board = self._initialize_board()
+
+        # Add constraint for exactly 1 queen in each row, col
         self._constrain_rows_and_columns()
-        self._constrain_diagonals()
+        # Add constraint for at most 1 queen in each diagonal
+        self.constrain_diagonal(self.backwards_diagonal_func())
+        self.constrain_diagonal(self.forwards_diagonal_func())
+        # Add constraint for exactly N queens on board
         self._constrain_num_queens()
+
+        # initialize solution printer
         self._solution_printer = NQueensPrinter(self._board, printer)
 
     def solve(self):
         self._cp_solver.SearchForAllSolutions(self._cp_model, self._solution_printer)
         print('Total Solutions: %i' % self._solution_printer.count())
 
+    def _initialize_board(self) -> List[List[CpModel.NewIntVar]]:
+        # Add NxN new spots to the model
+        return [
+            [self._add_new_spot(i, j) for i in self._indices]
+            for j in self._indices
+        ]
+
     def _add_new_spot(self, i: int, j: int) -> CpModel.NewIntVar:
+        # Adds a new boolean variable ot the solver, with the name 'posx,y'
         return self._cp_model.NewBoolVar(f"pos{i},{j}")
 
     def _constrain_rows_and_columns(self):
@@ -33,14 +50,6 @@ class NQueensSolver(object):
             # AddBoolXOr ensures exactly one queen in each row & each col
             self._cp_model.AddBoolXOr(self._board[i])
             self._cp_model.AddBoolXOr(list(zip(*self._board))[i])
-
-    def _constrain_diagonals(self):
-        # (List[None], int, int) -> List[Optional[NewIntVar]]
-        back_diag = lambda b, i, r: (b[i:] + r + b[:i])
-        self.constrain_diagonal(back_diag)
-
-        front_diag = lambda b, i, r: (b[:i] + r + b[i:])
-        self.constrain_diagonal(front_diag)
 
     def _constrain_num_queens(self):
         queens = None
@@ -71,17 +80,22 @@ class NQueensSolver(object):
 
     @staticmethod
     def forwards_diagonal_func():
-        return lambda b, i, r: ()
+        return lambda b, i, r: (b[:i] + r + b[i:])
 
 
 class NQueensPrinter(CpSolverSolutionCallback):
-    def __init__(self, board, printer: bool):
+    def __init__(self,
+                 board: List[List[CpModel.NewIntVar]],
+                 printer: bool):
         CpSolverSolutionCallback.__init__(self)
+
+        # Flatten board into list of variables
         self.__variables = [q for row in board for q in row]
         self.__solution_count = 0
         self.__total_queens = len(board)
         self.__should_print = printer
 
+    # Callback method for each solution
     def OnSolutionCallback(self):
         self.__solution_count += 1
         if self.__should_print:
@@ -90,6 +104,9 @@ class NQueensPrinter(CpSolverSolutionCallback):
                 self._draw_space(self.Value(v), has_newline)
             self._print_new_line(self.__total_queens)
             print()
+
+    def count(self):
+        return self.__solution_count
 
     def _draw_space(self, is_queen: bool, has_newline: bool):
         if has_newline:
@@ -101,33 +118,30 @@ class NQueensPrinter(CpSolverSolutionCallback):
     def _print_new_line(length: int):
         print('\n+' + ('---+' * length))
 
-    def count(self):
-        return self.__solution_count
+
+def main(should_print: bool, timer_on: bool, infinite: bool):
+    num_queens = 0
+    while True:
+        num_queens = (num_queens + 1) if infinite else int(input("How many queens? "))
+        start_time = time.perf_counter() if timer_on else None
+
+        # Instantiate the solver and solve
+        NQueensSolver(num_queens, should_print).solve()
+
+        if timer_on:
+            print(f"Time to solve {num_queens} queens: {time.perf_counter() - start_time:0.4f} seconds")
+
+        if infinite:
+            # This sleep keeps the while True from getting ahead of itself
+            time.sleep(1)
 
 
 if __name__ == "__main__":
+    # Parse arguments for the script
     parser = argparse.ArgumentParser()
     parser.add_argument('--print', dest='print', action='store_true')
     parser.add_argument('--time', dest='time', action='store_true')
     parser.add_argument('--infinite', dest='infinite', action='store_true')
+    args = parser.parse_args()
 
-    should_print = parser.parse_args().print
-    timer_on = parser.parse_args().time
-    infinite = parser.parse_args().infinite
-
-    n = 0
-    while True:
-        if infinite:
-            n += 1
-        else:
-            n = int(input("How many queens? "))
-        if timer_on:
-            start_time = time.perf_counter() if timer_on else None
-
-        NQueensSolver(n, should_print).solve()
-
-        if timer_on:
-            print(f"Time to find {n}: {time.perf_counter() - start_time:0.4f} seconds")
-
-        if infinite:
-            time.sleep(1)
+    main(args.print, args.time, args.infinite)
