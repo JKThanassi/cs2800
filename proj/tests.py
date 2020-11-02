@@ -1,5 +1,5 @@
 import pytest
-from main import NQueensSolver
+from solver import NQueensSolver
 
 
 def test_solution_count_1(capsys):
