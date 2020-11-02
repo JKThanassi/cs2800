@@ -1,10 +1,11 @@
 import argparse
 import time
 import csv
-from typing import List, Union, Callable, Any
+from typing import List, Union, Callable, Any, TypeVar
 from ortools.sat.python.cp_model import CpModel # type: ignore
 from ortools.sat.python.cp_model import _SumArray, IntVar, CpSolver, CpSolverSolutionCallback
 
+T = TypeVar("T", int, float, int)
 
 class NQueensSolver(object):
     def __init__(self,
@@ -252,13 +253,13 @@ def write_to_csv(headers: List[str], run_data: List[List[Any]], path: str):
     """
     if not len(headers) == len(run_data[0]):
         raise ValueError("Headers and rows must be of the same length")
-    with open(path, 'w', newline=" ") as csvfile:
-        queenwriter = csv.writer(csvfile=csvfile, dialect='excel')
+    with open(path, 'w') as csvfile:
+        queenwriter = csv.writer(csvfile, dialect='excel')
         queenwriter.writerow(headers)
         queenwriter.writerows(run_data)
 
 
-def gen_run_data(runs: int, start_size: int, end_size: int) -> List[List[int, float, int]]:
+def gen_run_data(runs: int, start_size: int, end_size: int) -> List[List[T]]:
     """
     This function runs the solver and records the data for each interval specified by the arguments of the function
     Args:
@@ -269,11 +270,11 @@ def gen_run_data(runs: int, start_size: int, end_size: int) -> List[List[int, fl
     Returns: A list containing the run data for each solver iteration
 
     """
-    run_data = list()  # type: List[List[int, float, int]]
+    run_data = list()  # type: List[List[T]]
     if runs < 1 or start_size >= end_size or start_size < 0:
         raise ValueError(
             "Runs must be greater than or equal to 1, start size must be less than end_size, and start size must be 0 or larger")
-    for size in range(start=start_size, stop=end_size):
+    for size in range(start_size, end_size):
         for run in range(runs):
             print(f"Run {run} of {runs} of size {size}")
             start_time = time.perf_counter()
@@ -313,24 +314,20 @@ def main(should_print: bool, timer_on: bool, infinite: bool):
 if __name__ == "__main__":
     # Parse arguments for the script
     parser = argparse.ArgumentParser()
-    exp_csv_grp = parser.add_argument_group()
-    exp_csv_grp.add_argument('--experiment', dest='experiment', action='store_true', help='Flag to run the experiment.')
-    exp_csv_grp.add_argument('--n-runs', dest='runs', type=int, help="Flag that takes the number of runs to preform per board size. Default 10")
-    exp_csv_grp.add_argument('--start', dest='start_size', type=int, help="Flag that takes the start of the board size range. Default 0")
-    exp_csv_grp.add_argument('--end', dest='end_size', type=int, help="Flag that takes the end of the board size range. Default 8")
-    exp_csv_grp.add_argument('--out', dest='out_file', type=str, help="Flag that sets the output file path. Default out.csv")
-    normal_run_group = parser.add_argument_group()
+    subparsers = parser.add_subparsers(help="Experiment will run the solver a specified number of times and output a csv and run creates an interactive environment")
+    exp_parser = subparsers.add_parser('experiment', help='Flag to run the experiment')
+    exp_parser.add_argument('--n-runs', dest='runs', type=int, help="Flag that takes the number of runs to preform per board size. Default 10", required=True)
+    exp_parser.add_argument('--start', dest='start_size', type=int, help="Flag that takes the start of the board size range. Default 0", required=True)
+    exp_parser.add_argument('--end', dest='end_size', type=int, help="Flag that takes the end of the board size range. Default 8", required=True)
+    exp_parser.add_argument('--out', dest='out_file', type=str, help="Flag that sets the output file path. Default out.csv", required=True)
+    normal_run_group = subparsers.add_parser("interactive", help="flag that sets the mode to interactive")
     normal_run_group.add_argument('--print', dest='print', action='store_true')
     normal_run_group.add_argument('--time', dest='time', action='store_true')
     normal_run_group.add_argument('--infinite', dest='infinite', action='store_true')
-    mutex_experiment_arg = parser.add_mutually_exclusive_group()
-    mutex_experiment_arg.add_argument_group(exp_csv_grp)
-    mutex_experiment_arg.add_argument_group(normal_run_group)
     args = parser.parse_args()
-
-    if args.experiment:
-        arg_map = vars(args)
-        arg_map.pop('experiment')
+    print(args)
+    arg_map = vars(args)
+    if arg_map.get('runs'):
         run_timing_experiments(**arg_map)
     else:
         main(args.print, args.time, args.infinite)
