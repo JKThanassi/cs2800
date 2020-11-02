@@ -1,105 +1,147 @@
-from typing import List
-from ortools.sat.python.cp_model import CpModel, CpSolver, CpSolverSolutionCallback
+import argparse
+import time
+from typing import List, Union
 
-class SolutionPrinter(CpSolverSolutionCallback):
-    def __init__(self, variables, size):
-        CpSolverSolutionCallback.__init__(self)
-        self.__variables = variables
-        self.__solution_count = 0
-        self.__board_size = size
-
-    def OnSolutionCallback(self):
-        self.__solution_count += 1
-        for idx, v in enumerate(self.__variables):
-            if idx % self.__board_size == 0:
-                print()
-            print(self.Value(v), end = ' ')
-        print()
-    
-    def SolutionCount(self):
-        return self.__solution_count
-
-def solve_n(board_size):
-    board, queens_on_board = create_n(board_size)
-    cp_solver = CpSolver()
-    solution_printer = SolutionPrinter([q for row in queens_on_board for q in row], board_size)
-    results = cp_solver.SearchForAllSolutions(board, solution_printer)
-    print('Total Solutions: %i' % solution_printer.SolutionCount())
+from ortools.sat.python.cp_model import CpModel, CpSolver, CpSolverSolutionCallback, _SumArray
 
 
+class NQueensSolver(object):
+    def __init__(self,
+                 num_queens: int,
+                 printer: bool):
+        # Initialize model and solver
+        self._cp_model = CpModel()
+        self._cp_solver = CpSolver()
 
-def create_n(board_size: int):
-    board = CpModel()
-    # initializing board position variables
-    queens_on_board = [
-        [board.NewBoolVar(f"pos{i},{j}") for j in range(board_size)]
-        for i in range(board_size)
-    ]  # type: List[List[CpModel.IntVar]]
+        self._num_queens = num_queens
+        self._indices = range(num_queens)
 
-    for i in range(board_size):
-        # Set the XOr constraint on row[i] for each row in queens_on_board
-        row_vars = queens_on_board[i]
-        board.AddBoolXOr(row_vars)
-        # Set the XOr constraint on col[i] for each col in queens_on_board
-        col_vars = [queens_on_board[j][i] for j in range(board_size)]
-        board.AddBoolXOr(col_vars)
+        # Initialize the board
+        self._board = self._initialize_board()
 
-    constrain_backward_diagonals(queens_on_board, board)
-    constrain_forward_diagonals(queens_on_board, board)
-    
+        # Add constraint for exactly 1 queen in each row, col
+        self._constrain_rows_and_columns()
+        # Add constraint for at most 1 queen in each diagonal
+        self.constrain_diagonal(self.backwards_diagonal_func())
+        self.constrain_diagonal(self.forwards_diagonal_func())
+        # Add constraint for exactly N queens on board
+        self._constrain_num_queens()
 
-    summed_board = None
-    for i in range(board_size):
-        for j in range(board_size):
-            if summed_board:
-                summed_board += queens_on_board[i][j]
-            else:
-                summed_board = queens_on_board[i][j]
+        # initialize solution printer
+        self._solution_printer = NQueensPrinter(self._board, printer)
 
-    board.Add(summed_board == board_size)
+    def solve(self):
+        self._cp_solver.SearchForAllSolutions(self._cp_model, self._solution_printer)
+        print('Total Solutions: %i' % self._solution_printer.count())
 
-    return board, queens_on_board
+    def _initialize_board(self) -> List[List[CpModel.NewIntVar]]:
+        # Add NxN new spots to the model
+        return [
+            [self._add_new_spot(i, j) for i in self._indices]
+            for j in self._indices
+        ]
 
+    def _add_new_spot(self, i: int, j: int) -> CpModel.NewIntVar:
+        # Adds a new boolean variable ot the solver, with the name 'posx,y'
+        return self._cp_model.NewBoolVar(f"pos{i},{j}")
 
-    # Every true value represents a queen on the board of size N
-    # create constraints 
-    # 1. No more or fewer than N variables can be true
-    # 2. No two "true" variables can have the same i value
-    # 3. No two "true" variables can have the same j value
-    # 4. No two "true" variables can have (i,x - j,x) == (i,y - j,y)
+    def _constrain_rows_and_columns(self):
+        for i in self._indices:
+            # AddBoolXOr ensures exactly one queen in each row & each col
+            self._cp_model.AddBoolXOr(self._board[i])
+            self._cp_model.AddBoolXOr(list(zip(*self._board))[i])
 
-    # For each row, the sum of the booleans is exactly 1
+    def _constrain_num_queens(self):
+        queens = None
+        for i in self._indices:
+            for j in self._indices:
+                queens = self.add(queens, self._board[i][j])
+        self._cp_model.Add(queens == self._num_queens)
 
-def get_rows(grid):
-    return [[c for c in r] for r in grid]
+    def constrain_diagonal(self, function):
+        b = [None] * (self._num_queens - 1)
+        board = [function(b, i, r) for i, r in enumerate(self._board)]
+        [self._cp_model.Add(self.sum_queens(diag) <= 1) for diag in list(zip(*board))]
 
-def get_cols(grid):
-    return zip(*grid)
-
-def constrain_backward_diagonals(grid, board):
-    b = [None] * (len(grid) - 1)
-    grid = [b[i:] + r + b[:i] for i, r in enumerate(get_rows(grid))]
-    diagonals = [[c for c in r if c is not None] for r in get_cols(grid)]
-    constrain_diagonal(diagonals, board)
-
-def constrain_forward_diagonals(grid, board):
-    b = [None] * (len(grid) - 1)
-    grid = [b[:i] + r + b[i:] for i, r in enumerate(get_rows(grid))]
-    diagonals = [[c for c in r if c is not None] for r in get_cols(grid)]
-    constrain_diagonal(diagonals, board)
-
-
-def constrain_diagonal(diagonals, board):
-    for diag in diagonals:
+    def sum_queens(self, diag):
         fd_sum = None
         for item in diag:
-            if fd_sum:
-                fd_sum += item 
-            else:
-                fd_sum = item  
-        board.Add(fd_sum <= 1)
+            if item is not None:
+                fd_sum = self.add(fd_sum, item)
+        return fd_sum
+
+    @staticmethod
+    def add(l: Union[_SumArray, None], item) -> _SumArray:
+        return l + item if l is not None else item
+
+    @staticmethod
+    def backwards_diagonal_func():
+        return lambda b, i, r: (b[i:] + r + b[:i])
+
+    @staticmethod
+    def forwards_diagonal_func():
+        return lambda b, i, r: (b[:i] + r + b[i:])
+
+
+class NQueensPrinter(CpSolverSolutionCallback):
+    def __init__(self,
+                 board: List[List[CpModel.NewIntVar]],
+                 printer: bool):
+        CpSolverSolutionCallback.__init__(self)
+
+        # Flatten board into list of variables
+        self.__variables = [q for row in board for q in row]
+        self.__solution_count = 0
+        self.__total_queens = len(board)
+        self.__should_print = printer
+
+    # Callback method for each solution
+    def OnSolutionCallback(self):
+        self.__solution_count += 1
+        if self.__should_print:
+            for idx, v in enumerate(self.__variables):
+                has_newline = idx % self.__total_queens == 0
+                self._draw_space(self.Value(v), has_newline)
+            self._print_new_line(self.__total_queens)
+            print()
+
+    def count(self):
+        return self.__solution_count
+
+    def _draw_space(self, is_queen: bool, has_newline: bool):
+        if has_newline:
+            self._print_new_line(self.__total_queens)
+            print('|', end='')
+        print(' Q |' if is_queen else ' - |', end='')
+
+    @staticmethod
+    def _print_new_line(length: int):
+        print('\n+' + ('---+' * length))
+
+
+def main(should_print: bool, timer_on: bool, infinite: bool):
+    num_queens = 0
+    while True:
+        num_queens = (num_queens + 1) if infinite else int(input("How many queens? "))
+        start_time = time.perf_counter() if timer_on else None
+
+        # Instantiate the solver and solve
+        NQueensSolver(num_queens, should_print).solve()
+
+        if timer_on:
+            print(f"Time to solve {num_queens} queens: {time.perf_counter() - start_time:0.4f} seconds")
+
+        if infinite:
+            # This sleep keeps the while True from getting ahead of itself
+            time.sleep(1)
+
 
 if __name__ == "__main__":
-    while True:
-        print(solve_n(int(input("Queens? "))))
+    # Parse arguments for the script
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--print', dest='print', action='store_true')
+    parser.add_argument('--time', dest='time', action='store_true')
+    parser.add_argument('--infinite', dest='infinite', action='store_true')
+    args = parser.parse_args()
 
+    main(args.print, args.time, args.infinite)
