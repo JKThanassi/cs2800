@@ -95,8 +95,14 @@ D2. (tlp (app2 nil y))
 	  (cons (first nil) (app2 (rest nil) y))))
 = {if-axioms}
 (rev2 y)
-... 
+= { Lemma app-nil-cons (from lab)}
+(app2 (rev2 y) nil)
+= { Def rev2 }
+(app2 (rev2 y) (rev2 nil))
+= { D1 }
+(app2 (rev2 y) (rev2 x))
 
+QED
 |#
 
 #| 
@@ -140,8 +146,42 @@ C9. (tlp (app2 x y))
 C10. (equal (rev2 (app2 (rest x) y)) (app2 (rev2 y) (rev2 (rest x)))))
 
 ;; Derived Context:
-...
+D1. (consp x) { C1, C2 }
 
+;; Goal
+(equal (rev2 (app2 x y)) (app2 (rev2 y) (rev2 x)))
+
+;; Proof
+(rev2 (app2 x y))
+= { Def app2 }
+(rev (if (endp x)
+       y
+       (cons (first x) (app2 (rest x) y))))
+= { if-axioms, C3, C4, D1 }
+(rev2 (cons (first x) (app2 (rest x) y)))
+= { Def rev2 }
+(if (endp (cons (first x) (app2 (rest x) y)))
+  (cons (first x) (app2 (rest x) y))
+  (app2 (rev2 (cdr (cons (first x) (app2 (rest x) y)))) 
+        (list (car (cons (first x) (app2 (rest x) y))))))
+= { Ax. endp }
+(if nil
+  (cons (first x) (app2 (rest x) y))
+  (app2 (rev2 (cdr (cons (first x) (app2 (rest x) y)))) 
+        (list (car (cons (first x) (app2 (rest x) y))))))
+= { if-axioms }
+(app2 (rev2 (cdr (cons (first x) (app2 (rest x) y)))) 
+      (list (car (cons (first x) (app2 (rest x) y)))))
+= { Ax. car, Ax. cdr }
+(app2 (rev2 (app2 (rest x) y)) (list (first x)))
+= { C10 }
+(app2 (app2 (rev2 y) (rev2 (rest x))) (list (first x)))
+= { Lemma assoc-append }
+(app2 (rev2 y) (app2 (rev2 (rest x)) (list (first x))))
+= { Def rev2, D1 }
+(app2 (rev2 y) (rev2 x))
+
+QED
 |#
 
 #| 
@@ -211,9 +251,22 @@ D3. (tlp (rev2 (rev2 (rest x)))) {D1, D2}
 (rev2 (rev2 x))
 = {Def. rev2}
 (rev2 (app2 (rev2 (cdr x)) (list (car x))))
+= { Lemma rev-app }
+(app2 (rev2 (list (car x))) (rev2 (rev2 (cdr x))))
+= { D2 }
+(app2 (rev2 (list (car x))) (cdr x))
+= { Def rev2 }
+(app2 (list (car x)) (cdr x))
+= { Def app2 }
+(cons (first (list (car x))) (app2 (rest (list (car x))) (cdr x)))
+= { Ax. car, Ax. cdr }
+(cons (car x) (app2 nil (cdr x)))
+= { Def app2 }
+(cons (car x) (cdr x))
+= { Def cons }
+x
 
-...
-
+QED
 |# 
 
 #| 
