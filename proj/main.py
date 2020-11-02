@@ -1,5 +1,6 @@
 import argparse
 import time
+import csv
 from typing import List, Union, Callable, Any
 from ortools.sat.python.cp_model import CpModel # type: ignore
 from ortools.sat.python.cp_model import _SumArray, IntVar, CpSolver, CpSolverSolutionCallback
@@ -219,6 +220,68 @@ class NQueensPrinter(CpSolverSolutionCallback):
         """
         print('\n+' + ('---+' * length))
 
+def run_timing_experiments(runs: int = 10, start_size: int = 0, end_size: int = 8, out_file: str = "out.csv"):
+    """
+    This function will run the solver _runs_ times from board size start_size to end size and output a
+    csv where each row is the board size, time to solve, and num solutions.
+    Args:
+        runs:
+        start_size: The board size to start the experiments at (inclusive)
+        end_size: The board size to stop the experiments at (inclusive)
+        out_file: The filepath to write the csv out to. Defaults to out.csv
+
+    Returns: None
+
+    """
+    data_headers = ["Board Size", "Time to solve", "Num Solutions"]
+    run_data = gen_run_data(runs, start_size, end_size)
+    write_to_csv(data_headers, run_data, out_file)
+
+
+def write_to_csv(headers: List[str], run_data: List[List[Any]], path: str):
+    """
+    This function is responsible for writing the run data out to a csv. The first row will be the data labels
+    The headers and run data rows must be the same length or an exception will be raised.
+    Args:
+        headers: The labels for the data
+        run_data: A list of lists of run data
+        path: The path to write the file
+
+    Returns: None
+
+    """
+    if not len(headers) == len(run_data[0]):
+        raise ValueError("Headers and rows must be of the same length")
+    with open(path, 'w', newline=" ") as csvfile:
+        queenwriter = csv.writer(csvfile=csvfile, dialect='excel')
+        queenwriter.writerow(headers)
+        queenwriter.writerows(run_data)
+
+
+def gen_run_data(runs: int, start_size: int, end_size: int) -> List[List[int, float, int]]:
+    """
+    This function runs the solver and records the data for each interval specified by the arguments of the function
+    Args:
+        runs: The number of runs to preform for each permutation of board size
+        start_size: The start value for the range of board sizes to run (inclusive)
+        end_size: The end value for the range of board sizes to run (inclusive)
+
+    Returns: A list containing the run data for each solver iteration
+
+    """
+    run_data = list()  # type: List[List[int, float, int]]
+    if runs < 1 or start_size >= end_size or start_size < 0:
+        raise ValueError(
+            "Runs must be greater than or equal to 1, start size must be less than end_size, and start size must be 0 or larger")
+    for size in range(start=start_size, stop=end_size):
+        for run in range(runs):
+            print(f"Run {run} of {runs} of size {size}")
+            start_time = time.perf_counter()
+            nq = NQueensSolver(size, False)
+            nq.solve()
+            end_time = time.perf_counter()
+            run_data.append([size, end_time - start_time, nq._solution_printer.count()])
+    return run_data
 
 def main(should_print: bool, timer_on: bool, infinite: bool):
     """
@@ -250,9 +313,24 @@ def main(should_print: bool, timer_on: bool, infinite: bool):
 if __name__ == "__main__":
     # Parse arguments for the script
     parser = argparse.ArgumentParser()
-    parser.add_argument('--print', dest='print', action='store_true')
-    parser.add_argument('--time', dest='time', action='store_true')
-    parser.add_argument('--infinite', dest='infinite', action='store_true')
+    exp_csv_grp = parser.add_argument_group()
+    exp_csv_grp.add_argument('--experiment', dest='experiment', action='store_true', help='Flag to run the experiment.')
+    exp_csv_grp.add_argument('--n-runs', dest='runs', type=int, help="Flag that takes the number of runs to preform per board size. Default 10")
+    exp_csv_grp.add_argument('--start', dest='start_size', type=int, help="Flag that takes the start of the board size range. Default 0")
+    exp_csv_grp.add_argument('--end', dest='end_size', type=int, help="Flag that takes the end of the board size range. Default 8")
+    exp_csv_grp.add_argument('--out', dest='out_file', type=str, help="Flag that sets the output file path. Default out.csv")
+    normal_run_group = parser.add_argument_group()
+    normal_run_group.add_argument('--print', dest='print', action='store_true')
+    normal_run_group.add_argument('--time', dest='time', action='store_true')
+    normal_run_group.add_argument('--infinite', dest='infinite', action='store_true')
+    mutex_experiment_arg = parser.add_mutually_exclusive_group()
+    mutex_experiment_arg.add_argument_group(exp_csv_grp)
+    mutex_experiment_arg.add_argument_group(normal_run_group)
     args = parser.parse_args()
 
-    main(args.print, args.time, args.infinite)
+    if args.experiment:
+        arg_map = vars(args)
+        arg_map.pop('experiment')
+        run_timing_experiments(**arg_map)
+    else:
+        main(args.print, args.time, args.infinite)
