@@ -5,7 +5,7 @@ from typing import List, Union, Callable, Any, TypeVar
 from ortools.sat.python.cp_model import CpModel # type: ignore
 from ortools.sat.python.cp_model import _SumArray, IntVar, CpSolver, CpSolverSolutionCallback
 
-T = TypeVar("T", int, float, int)
+T = Union[int, float]
 
 class NQueensSolver(object):
     def __init__(self,
@@ -228,7 +228,7 @@ def run_timing_experiments(runs: int = 10, start_size: int = 0, end_size: int = 
     Args:
         runs:
         start_size: The board size to start the experiments at (inclusive)
-        end_size: The board size to stop the experiments at (inclusive)
+        end_size: The board size to stop the experiments at (exclusive)
         out_file: The filepath to write the csv out to. Defaults to out.csv
 
     Returns: None
@@ -265,7 +265,7 @@ def gen_run_data(runs: int, start_size: int, end_size: int) -> List[List[T]]:
     Args:
         runs: The number of runs to preform for each permutation of board size
         start_size: The start value for the range of board sizes to run (inclusive)
-        end_size: The end value for the range of board sizes to run (inclusive)
+        end_size: The end value for the range of board sizes to run (exclusive)
 
     Returns: A list containing the run data for each solver iteration
 
@@ -316,10 +316,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help="Experiment will run the solver a specified number of times and output a csv and run creates an interactive environment")
     exp_parser = subparsers.add_parser('experiment', help='Flag to run the experiment')
-    exp_parser.add_argument('--n-runs', dest='runs', type=int, help="Flag that takes the number of runs to preform per board size. Default 10", required=True)
-    exp_parser.add_argument('--start', dest='start_size', type=int, help="Flag that takes the start of the board size range. Default 0", required=True)
-    exp_parser.add_argument('--end', dest='end_size', type=int, help="Flag that takes the end of the board size range. Default 8", required=True)
-    exp_parser.add_argument('--out', dest='out_file', type=str, help="Flag that sets the output file path. Default out.csv", required=True)
+    exp_parser.add_argument('--n-runs', dest='runs', type=int, help="Flag that takes the number of runs to preform per board size.", required=True)
+    exp_parser.add_argument('--start', dest='start_size', type=int, help="Flag that takes the start of the board size range.", required=True)
+    exp_parser.add_argument('--end', dest='end_size', type=int, help="Flag that takes the end of the board size range. EXCLUSIVE", required=True)
+    exp_parser.add_argument('--out', dest='out_file', type=str, help="Flag that sets the output file path.", required=True)
     normal_run_group = subparsers.add_parser("interactive", help="flag that sets the mode to interactive")
     normal_run_group.add_argument('--print', dest='print', action='store_true')
     normal_run_group.add_argument('--time', dest='time', action='store_true')

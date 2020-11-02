@@ -10,10 +10,21 @@
     - **Note:** If you want to be able to run tests and check types via mypy, you must run `pipenv install --dev`
 3. Once that is complete, run pipenv shell to activate the generated virtualenv
 4. To run the program
-    - usage: `main.py [-h] [--print] [--time] [--infinite]`
-    - where `--print` is a boolean flag that enables printing of board solutions
-    - where `--time` is a boolean flag that enables solution generation timing
-    - where `--infinite` is a boolean flag that will infinitely increase the board size until interrupted with `c-c` (emacs notation for ctrl+c)
+    - usage: `main.py [-h] {experiment,interactive} ...`
+    - where `--h` is a boolean flag that prints out documentation for these two commands
+        - Experiment
+            - Runs the program for a specified number of runs for each board size within start_size and end_size and outputs data to a csv.
+            - The csv has headers at the top and each subsequent row has data in each column corresponding to the header.
+            - usage: `main.py experiment [-h] --n-runs RUNS --start START_SIZE --end END_SIZE --out OUT_FILE`
+            -  `--n-runs RUNS`       Flag that takes the number of runs to preform per board size. Takes one argument.
+            -  `--start START_SIZE`  Flag that takes the start of the board size range. Takes one argument.
+            -  `--end END_SIZE`      Flag that takes the end of the board size range. EXCLUSIVE. Takes one argument.
+            -  `--out OUT_FILE`      Flag that sets the output file path. Takes one argument.
+        - Interactive
+            - usage: `main.py interactive [-h] [--print] [--time] [--infinite]`
+            - where `--print` is a boolean flag that enables printing of board solutions
+            - where `--time` is a boolean flag that enables solution generation timing
+            - where `--infinite` is a boolean flag that will infinitely increase the board size until interrupted with `c-c` (emacs notation for ctrl+c) 
 5. To exit the program
     - Hit `c-c`
 6. Running tests **must install with --dev flag**
