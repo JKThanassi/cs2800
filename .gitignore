@@ -6,3 +6,5 @@ lab/
 /lab*
 .vscode/
 .idea/
+__pycache__/
+*.csv
