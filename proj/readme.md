@@ -33,7 +33,7 @@
     - if all goes well, all the tests will pass!
 7. Running mypy **must install with --dev flag**
     - To check the program for type-correctness, we will need to run mypy
-    - in the root directory run `mypy main.py` and address any errors that occur
+    - in the root directory run `mypy *.py` and address any errors that occur
         - In my experience most bugs in dynamically typed languages are data-shape induced bugs
 
 ### Using pyenv to install python 3.8.1
