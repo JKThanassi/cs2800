@@ -43,3 +43,4 @@
 3. add `eval "$(pyenv init -)"` to your .bashrc or .zshrc and restart your terminal
     - Run `which python` to see if it worked
     - The output should be something like this: `~/.pyenv/versions/3.8.1/bin/python`
+    - If you want to make your global python version 3.8.1 for only the current terminal session, run `pyenv global 3.8.1`
