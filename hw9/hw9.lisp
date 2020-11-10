@@ -142,15 +142,124 @@ C5. (permp (cdr x) (rev2 (cdr x)))
 = { C4, if-axioms }
 (and (in (car x) (rev2 x))
      (permp (cdr x) (del (car x) (rev2 x))))
+= { Lemma 2 }
+(permp (cdr x) (del (car x) (rev2 x)))
+= { Lemma 1, C5, Def permp, PL (Transitive) }
+true
+Q.E.D
 
 
-Lemma 1:
-(equal (rev2 (cdr x)) (del (car x) (rev2 x)))
+;; Lemma 2:
+(in (car x) (rev2 x))
 
-Proof obligations:
+;; Proof obligations:
 1. 
-(implies (not (and (tlp x))) 
-        (equal (rev2 (cdr x)) (del (car x) (rev2 x))))
+(implies (not (lorp x))
+         (in (car x) (rev2 x)))
+
+2. 
+(implies (lorp x)
+          (implies (consp x)
+                (implies (equal (car x) (car (rev2 x)))
+                        (in (car x) (rev2 x)))))
+
+3.
+(implies (lorp x)
+          (implies (consp x)
+                (implies (not (equal (car x) (car (rev2 x))))
+                        (implies (in (car x) (rev2 (cdr x)))
+                                 (in (car x) (rev2 x))))))
+
+;; Proof Obligation 1
+(implies (endp x)
+         (in (car x) (rev2 x)))
+
+;; Contract Completion:
+(implies (and (endp x) (consp x))
+         (in (car x) (rev2 x)))
+
+;; Context:
+C1. (endp x)
+C2. (consp x)
+
+;; Derived Context:
+D1. nil { C1, C2 }
+Q.E.D
+
+;; Proof Obligation 2
+(implies (lorp x)
+          (implies (consp x)
+                (implies (equal (car x) (car (rev2 x)))
+                        (in (car x) (rev2 x)))))
+
+;; Exportation
+(implies (and (lorp x)
+              (consp x)
+              (equal (car x) (car (rev2 x))))
+         (in (car x) (rev2 x)))
+
+;; Context
+C1. (lorp x)
+C2. (consp x)
+C3. (equal (car x) (car (rev2 x)))
+
+;; Derived Context
+D1. (consp (rev2 x)) { C2, Def rev2 }
+
+;; Goal
+(in (car x) (rev2 x))
+
+;; Proof
+(in (car x) (rev2 x))
+= { Def in, D1 }
+(or (== (car x) (car (rev2 x)))
+    (in (car x) (cdr (rev2 x))))
+= { C3, PL }
+true
+Q.E.D
+
+;; Proof Obligation 3
+(implies (lorp x)
+          (implies (consp x)
+                (implies (not (equal (car x) (car (rev2 x))))
+                        (implies (in (car x) (rev2 (cdr x)))
+                                (in (car x) (rev2 x))))))
+
+;; Exportation
+(implies (and (lorp x)
+              (consp x)
+              (not (equal (car x) (car (rev2 x))))
+              (in (car x) (rev2 (cdr x))))
+         (in (car x) (rev2 x)))
+
+;; Context
+C1. (lorp x)
+C2. (consp x)
+C3. (not (equal (car x) (car (rev2 x))))
+C4. (in (car x) (rev2 (cdr x)))
+
+;; Derived Context
+D1. (consp (rev2 x)) { C2, Def rev2 }
+
+;; Goal
+(in (car x) (rev2 x))
+
+;; Proof
+(in (car x) (rev2 x))
+= { Def in, D1, C3 }
+(in (car x) (cdr (rev2 x)))
+= { C4 }
+true
+Q.E.D
+
+
+;; Lemma 1:
+(permp (rev2 (cdr x)) (del (car x) (rev2 x)))
+
+;; Proof Obligations:
+1. 
+(implies (not (and (tlp x)))
+         (equal (rev2 (cdr x)) (del (car x) (rev2 x))))
 
 2. 
 (implies (tlp x)
@@ -159,29 +268,33 @@ Proof obligations:
 
 3. 
 (implies (tlp x)
-        (implies (not (endp L))
-                (equal (rev2 (cdr x)) (del (car x) (rev2 x)))))
+        (implies (not (endp (rev2 x)))
+                 (implies (== (car x) (car (rev2 x))))
+                          (equal (rev2 (cdr x)) (del (car x) (rev2 x)))))
 
+4. 
+(implies (tlp x)
+        (implies (not (endp (rev2 x)))
+                 (implies (equal (rev2 (cdr (cdr x))) (del (car x) (rev2 (cdr x))))
+                          (equal (rev2 (cdr x)) (del (car x) (rev2 x))))))
 
-Proof 1
+;; Proof Obligation 1
 (implies (not (and (tlp x))) 
         (equal (rev2 (cdr x)) (del (car x) (rev2 x))))
 
-Contract Completion
+;; Contract Completion
 (implies (equal (rev2 (cdr x)) (del (car x) (rev2 x)))
         (tlp x))
 
-Context
+;; Context
 C1. (not (and (tlp x)))
 C2. (tlp x) 
 
-Derived Context:
+;; Derived Context:
 D1. nil { C1, C2 }
-
 Q.E.D.
 
-
-Proof 2
+;; Proof Obligation 2
 (implies (tlp x)
         (implies (endp (rev2 x))
                 (equal (rev2 (cdr x)) (del (car x) (rev2 x)))))
@@ -212,44 +325,65 @@ Proof:
 (equal nil nil)
 =
 t
-
 Q.E.D
 
+;; Proof Obligation 3
+(implies (tlp x)
+        (implies (not (endp (rev2 x)))
+                 (implies (== (car x) (car (rev2 x))))
+                          (equal (rev2 (cdr x)) (del (car x) (rev2 x)))))
 
-Proof 3
+;; Exportation:
+(implies (and (tlp x) 
+              (not (endp (rev2 x))) 
+              (== (car x) (car (rev2 x))))
+         (equal (rev2 (cdr x)) (del (car x) (rev2 x))))
+
+;; Context:
+C1. (tlp x)
+C2. (not (endp (rev2 x)))
+C3. (== (car x) (car (rev2 x)))
+
+;; Goal:
+(equal (rev2 (cdr x)) (del (car x) (rev2 x)))
+
+;; Proof:
+(equal (rev2 (cdr x)) (del (car x) (rev2 x)))
+= { def del, C1, C2, C3, if-axioms }
+(equal (rev2 (cdr x)) (cdr (rev2 x)))
+= { PL }
+true
+Q.E.D.
+
+;; Proof Obligation 4
 (implies (tlp x)
         (implies (not (endp (rev2 x)))
                 (equal (rev2 (cdr x)) (del (car x) (rev2 x)))))
 
-Exportation:
+;; Exportation:
 (implies (and (tlp x) (not (endp (rev2 x))))
         (equal (rev2 (cdr x)) (del (car x) (rev2 x))))
 
-Context:
+;; Context:
 C1. (tlp x)
 C2. (not (endp (rev2 x)))
+C3. (equal (rev2 (cdr (cdr x))) (del (car x) (rev2 (cdr x)))
 
-Derived Context:
-D1. (not (endp x))
+;; Derived Context:
+D1. (not (endp x)) { C2, def rev2 }
 
-Goal: 
+;; Goal: 
 (equal (rev2 (cdr x)) (del (car x) (rev2 x)))
 
-Proof:
+;; Proof:
 (equal (rev2 (cdr x)) (del (car x) (rev2 x)))
 = { def rev2, C2 }
-
-
-
-
-(definec del (a :all L :lor) :lor
-  (cond 
-    ((endp L) L)
-    ((== a (car L)) (cdr L))
-    (t (cons (car L) (del a (cdr L))))))
-
-(definec rev2 (x :tl) :tl
-        (if (endp x)
-                x
-          (app2 (rev2 (cdr x)) (list (car x)))))
+(equal (rev2 (cdr x))
+       (del (car x)
+            (app2 (rev2 (cdr x)) (list (car x)))))
+= { Def app2, del }
+(equal (rev2 (cdr x)) (rev2 (cdr x)))
+= { PL }
+true
+Q.E.D.
 |#
