@@ -117,9 +117,9 @@ def setup_parser() -> argparse.ArgumentParser:
     exp_parser.add_argument('--out', dest='out_file', type=str, help="Flag that sets the output file path.",
                             required=True)
     normal_run_group = subparsers.add_parser("interactive", help="flag that sets the mode to interactive")
-    normal_run_group.add_argument('--print', dest='print', action='store_true')
-    normal_run_group.add_argument('--time', dest='time', action='store_true')
-    normal_run_group.add_argument('--infinite', dest='infinite', action='store_true')
+    normal_run_group.add_argument('--print', dest='print', action='store_true', help="Flag to enable printing of solved boards")
+    normal_run_group.add_argument('--time', dest='time', action='store_true', help="Flag to enable printing of time to generate all solutions")
+    normal_run_group.add_argument('--infinite', dest='infinite', action='store_true', help="Flag to enable infinite incrementing of board size")
     return parser
 
 
