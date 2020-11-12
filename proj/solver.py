@@ -107,6 +107,11 @@ class NQueensSolver(object):
         """
         b = [None] * (self._num_queens - 1)
         board = [function(b, i, r) for i, r in enumerate(self._board)]
+        # Essentially, this works by padding rows ascending or descending depending if we want forwards or backwards diags
+        # We then take the columns of this and ignore the null padding
+        # 1 2 3    |X|X|1|2|3|    | | |1|2|3|
+        # 4 5 6 => |X|4|5|6|X| => | |4|5|6| | => [[7],[4,8],[1,5,9],[2,6],[3]]
+        # 7 8 9    |7|8|9|X|X|    |7|8|9| | |
         [self._cp_model.Add(self.sum_queens(diag) <= 1) for diag in list(zip(*board))]
 
     def sum_queens(self, diag: List[IntVar]) -> _SumArray:
