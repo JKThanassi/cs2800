@@ -35,7 +35,7 @@ different sort.
 
 (definec fib-acc2 (c :nat ans-1 :nat ans :nat) :nat
   (if (zp c)
-      ans
+      ans 
       (fib-acc2 (1- c) ans (+ ans-1 ans))))
 
 ;; Our conjecture
@@ -44,8 +44,9 @@ different sort.
 ;; Go to it!
 
 
-;; Let me gently hint that, you will very likely want to show first
+Lemma fib-fib2
 
+Goal:
 (equal (fib2 n) (fib n))
 
 Proof obligations:
@@ -103,25 +104,147 @@ C1. (natp n)
 C2. (not (>= n 2))
 
 Derived Context:
-D1. (equal (fib n) (+ (fib (1- n)) (fib (1- (1- n))))) { def fib }
-D2. (equal (fib2 n) (fib-acc2 (1- n) 0 1)) { def fib2 }
+D1. (equal (fib n) (+ (fib (1- n)) (fib (1- (1- n))))) { def fib, if-axioms, C1, C2 }
+D2. (equal (fib2 n) (fib-acc2 (1- n) 0 1)) { def fib2, if-axioms, C1, C2 }
 
 Goal:
 (equal (fib2 n) (fib n))
 
 Proof:
 (equal (fib2 n) (fib n))
-= { Lemma 1 }
+= { Lemma fib-fib2-induct }
 true
 Q.E.D.
 
 
-Lemma 1:
-()
+Lemma fib-fib2-induct
 
+Goal:
+(equal (fib2 n) (fib n))
 
+Induction scheme: natural numbers, n >= 2
+
+Proof Obligations:
+
+Obligation 1 (contract case)
+(implies (not (natp n)
+          (equal (fib2 n) (fib n))))
+
+Obligation 2 (base case n=2)
+(implies (natp n)
+          (implies (= n 2)
+            (equal (fib2 n) (fib n))))
+
+Obligation 3 (base case n=3)
+(implies (natp n)
+          (implies (= n 3)
+            (equal (fib2 n) (fib n))))
+
+Obligation 4 (inductive step)
+(implies (natp n)
+          (implies (> n 3)
+            (implies (and (equal (fib2 (- n 1)) (fib (- n 1))
+                          (equal (fib2 (- n 2)) (fib (- n 2)))))
+              (equal (fib2 n) (fib n)))))
+
+Proof 1:
+(implies (not (natp n))
+          (equal (fib2 n) (fib n)))
 
 Context:
+C1. (not (natp n))
+C2. (natp n) { contract of fib }
+C3. (>= n 2)
+
+Derived Context:
+D1. nil { C1, C2 }
+
+Q.E.D.
+
+Proof 2:
+(implies (and (natp n) (= n 2)) 
+    (equal (fib2 n) (fib n)))
+
+Context:
+C1. (natp n)
+C2. (= n 2)
+
+Proof:
+(equal (fib2 n) (fib n)))
+= { def fib, fib2 }
+(equal (+ (fib (1- n)) (fib (1- (1- n)))) (fib-acc2 (1- n) 0 1))
+= { C2 }
+(equal (+ (fib 1) (fib 0)) (fib-acc2 1 0 1))
+= { def fib, if-axioms }
+(equal (+ 1 0) (fib-acc2 1 0 1))
+= { def fib-acc2, if-axioms }
+(equal (+ 1 0) (fib-acc2 0 1 (+ 0 1)))
+= { def fib-acc2, if-axioms }
+(equal (+ 1 0) 1)
+= { arith }
+true
+
+Q.E.D.
+
+Proof 3:
+(implies (natp n)
+          (implies (= n 3)
+            (equal (fib2 n) (fib n))))
+
+Context:
+C1. (natp n)
+C2. (= n 3)
+
+Proof:
+(equal (fib2 n) (fib n)))
+= { def fib2, fib }
+(equal (+ (fib (1- n)) (fib (1- (1- n)))) (fib-acc2 (1- n) 0 1))
+= { C2 }
+(equal (+ (fib 2) (fib 1)) (fib-acc2 2 0 1))
+= { def fib, if-axioms }
+(equal (+ (+ (fib 1) (fib 0)) 1) (fib-acc2 2 0 1))
+= { def fib, if-axioms }
+(equal 2 (fib-acc2 2 0 1))
+= { def fib-acc2, if-axioms }
+(equal 2 (fib-acc2 1 1 (+ 0 1)))
+= { def fib-acc2, if-axioms, arith }
+(equal 2 (fib-acc2 0 1 2))
+= { def fib-acc2, if-axioms }
+(equal 2 2)
+=
+true 
+
+Q.E.D.
+
+Proof 4:
+(implies (natp n)
+          (implies (> n 3)
+            (implies (and (equal (fib2 (- n 1)) (fib (- n 1))
+                          (equal (fib2 (- n 2)) (fib (- n 2)))))
+              (equal (fib2 n) (fib n)))))
+
+Context:
+C1. (natp n)
+C2. (> n 3)
+C3. (equal (fib2 (- n 1)) (fib (- n 1)))
+C4. (equal (fib2 (- n 2)) (fib (- n 2)))
+
+Proof:
+Goal: 
+(equal (fib2 n) (fib n))
+
+(equal (fib2 n) (fib n))
+= { C2, if-axioms, def fib }
+(equal (fib2 n) (+ (fib (- n 1)) (fib (- n 2))))
+= { C3, C4 }
+(equal (fib2 n) (+ (fib2 (- n 1)) (fib2 (- n 2))))
+= { def fib, C2, if-axioms }
+(equal (fib-acc2 (1- n) 0 1)
+       (+ (fib-acc2 (1- (- n 1)) 0 1)
+          (fib-acc2 (1- (- n 2)) 0 1)))
+= { arith }
+????????????????????????
+
 
 #|
 
