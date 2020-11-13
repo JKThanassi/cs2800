@@ -48,8 +48,80 @@ different sort.
 
 (equal (fib2 n) (fib n))
 
-;; and use that in constructing the goal for your proof.
+Proof obligations:
 
+Obligation 1:
+(implies (and (natp n) (zp n)) 
+         (equal (fib2 n) (fib n)))
+
+Context:
+C1. (natp n)
+C2. (zp n)
+
+Derived Context:
+D1. (equal 0 (fib n)) { Def fib, if-axioms, c2 }
+D2. (equal 0 (fib2 n)) { Def fib2, if-axioms, c2 }
+
+Goal:
+(equal (fib2 n) (fib n))
+
+Proof:
+(equal (fib2 n) (fib n))
+= { C1, C2, D1, D2 }
+true
+
+Q.E.D.
+
+Obligation 2:
+(implies (and (natp n) (= 1 n)) 
+         (equal (fib2 n) (fib n)))
+
+Context:
+C1. (natp n)
+C2. (= 1 n)
+
+Derived Context:
+D1. (equal (fib n) 1) { def fib, if-axioms }
+D2. (equal (fib2 n) (fib-acc2 (1- n) 0 1)) { def fib2, if-axioms }
+
+Proof:
+(equal 1 (fib-acc2 (1- n) 0 1))
+= { arith, C2 }
+(equal 1 (fib-acc2 0 0 1))
+= { def fib-acc2, if-axioms }
+(equal 1 1)
+
+Q.E.D.
+
+
+Obligation 3:
+(implies (and (natp n) (not (>= n 2)))
+         (equal (fib2 n) (fib n)))
+
+Context:
+C1. (natp n)
+C2. (not (>= n 2))
+
+Derived Context:
+D1. (equal (fib n) (+ (fib (1- n)) (fib (1- (1- n))))) { def fib }
+D2. (equal (fib2 n) (fib-acc2 (1- n) 0 1)) { def fib2 }
+
+Goal:
+(equal (fib2 n) (fib n))
+
+Proof:
+(equal (fib2 n) (fib n))
+= { Lemma 1 }
+true
+Q.E.D.
+
+
+Lemma 1:
+()
+
+
+
+Context:
 
 #|
 
