@@ -20,7 +20,7 @@ different sort.
 ;; In the context of these functions
 
 (definec fact (n :nat) :nat
-  (if 0 1
+  (if (= n 0) 1
     (* n (fact (1- n)))))
 
 (definec fib (n :nat) :nat
@@ -41,9 +41,223 @@ different sort.
 ;; Our conjecture
 (<= (fib2 n) (fact n))
 
-;; Go to it!
+Proof:
+(<= (fib2 n) (fact n))
+= { Lemma fib-fib2 }
+(<= (fib n) (fact n))
+= { Lemma conjecture-substituted }
+true
+
+Q.E.D.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Lemma conjecture-substituted
+(<= (fib n) (fact n))
+
+Induction scheme: natural numbers
+
+Proof obligations:
+1. Contract case
+(implies (not (natp n)) (<= (fib n) (fact n)))
+
+Contract Completion:
+(implies (and (not (natp n)) (natp n))
+         (<= (fib n) (fact n)))
+
+Context: 
+C1. (not (natp n))
+C2. (natp n)
+C3. (and (not (natp n)) (natp n)) 
+
+Derived Context:
+D1. nil { C1, C2, C3 }
+
+Q.E.D
 
 
+2. Base case n = 0
+(implies (natp n)
+  (implies (zp n)
+    (<= (fib n) (fact n))))
+
+Exportation:
+(implies (and (natp n) (zp n))
+  (<= (fib n) (fact n)))
+  
+Context:
+C1. (natp n)
+C2. (zp n)
+
+Goal:
+(<= (fib n) (fact n))
+
+Proof:
+(<= (fib n) (fact n))
+= { C1, C2 }
+(<= (fib 0) (fact 0))
+= { def fib, def fact, if-axioms }
+(<= 0 1 )
+= { arith }
+true
+
+Q.E.D.
+
+3. Base case n = 1
+(implies (natp n)
+  (implies (= 1 n)
+    (<= (fib n) (fact n))))
+
+Exportation:
+(implies (and (natp n) (= 1 n))
+  (<= (fib n) (fact n)))
+  
+Context:
+C1. (natp n)
+C2. (= 1 n)
+
+Goal:
+(<= (fib n) (fact n))
+
+Proof:
+(<= (fib n) (fact n))
+= { C1, C2 }
+(<= (fib 1) (fact 1))
+= { def fib, def fact, if-axioms }
+(<= 1 (* 1 (fact 0)))
+= { def fact, if-axioms }
+(<= 1 (* 1 1))
+= { arith }
+(<= 1 1)
+= { arith }
+true
+
+Q.E.D.
+    
+
+4. Induction
+(implies (natp n)
+  (implies (> n 1)
+    (implies (<= (fib (1- n)) (fact (1- n))))
+      (<= (fib n) (fact n)))))
+
+Exportation:
+(implies (and (natp n)
+              (> n 1)
+              (<= (fib (1- n)) (fact (1- n))))
+         (<= (fib n) (fact n)))
+
+Context:
+C1. (natp n)
+C2. (> n 1)
+C3. (<= (fib (1- n)) (fact (1- n)))
+
+Derived Context:
+D1. (>= (* n (fact (1- n))) (* 2 (fact (1- n)))) { C2 }
+D2. (< (fib (1- n)) (fib (1- (1- n)))) { ... }
+
+Goal:
+(<= (fib n) (fact n))
+
+Proof:
+(<= (fib n) (fact n)))
+= { def fib, def fact, C2 }
+(<= (+ (fib (1- n)) (fib (1- (1- n)))) (* n (fact (1- n))))
+= { C3 }
+(<= (+ (fact (1- n)) (fib (1- (1- n)))) (* n (fact (1- n))))
+= { arith }
+(<= (* (fact (1- n)) (+ 1 (/ (fib (1- (1- n))) (fact (1- n)))) (* n (fact (1- n)))))
+= { arith }
+(>= n (+ 1 (/ (fib (1- (1- n))) (fact (1- n)))))
+= { arith, C2, lemma almost-there }
+true
+
+Q.E.D.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Lemma almost-there
+(>= 2 (+ 1 (/ (fib (1- (1- n))) (fact (1- n)))))
+
+Context:
+C1. (natp n)
+C2. (> n 1)
+C3. (<= (fib (1- n)) (fact (1- n)))
+
+Derived Context:
+D1. (implies 
+      (and (<= (fib (1- (1- n))) (fib (1- n))) (<= (fib (1- n)) (fact (1- n))))
+      (<= (fib (1- (1- n))) (fact (1- n)))) { arith }
+
+Proof:
+(>= 2 (+ 1 (/ (fib (1- (1- n))) (fact (1- n)))))
+= { arith }
+(>= 1 (/ (fib (1- (1- n))) (fact (1- n))))
+= { arith }
+(<= (fib (1- (1- n))) (fact (1- n)))
+= { lemma getting-closer, C3, D1 }
+true
+
+Lemma getting-closer 
+(<= (fib (1- n)) (fib n))
+
+Context:
+C1. (natp n)
+C2. (> n 0)
+
+Induction scheme: natural numbers
+
+No contract case needed because we have (natp n)
+
+Base case (n = 1):
+(implies (and (natp n) (> n 0) (< n 2))
+         (<= (fib (1- n)) (fib n)))
+
+Context:
+C1. (natp n)
+C2. (> n 0)
+C3. (< n 2)
+
+Derived Context:
+D1. (= n 1) { C1, C2, C3 }
+
+Goal:
+(<= (fib (1- n)) (fib n))
+
+Proof:
+(<= (fib (1- n)) (fib n))
+= { D1 }
+(<= (fib 0) (fib 1))
+= { def fib }
+(<= 0 1)
+=
+true
+
+Q.E.D.
+
+
+Inductive case:
+(implies (and (natp n) (>= n 2))
+         (<= (fib (1- n)) (fib n)))
+         
+Context:
+C1. (natp n)
+C2. (>= n 2)
+
+Goal:
+(<= (fib (1- n)) (fib n))
+
+Proof:
+(<= (fib (1- n)) (fib n)))
+= { Def fib }
+(<= (fib (1- n)) (+ (fib (1- n)) (fib (1- (1- n)))))
+= { arith }
+(<= 0 (fib (1- (1- n))))
+= { definition of natural numbers, C1 }
+true
+
+Q.E.D.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Lemma fib-fib2
 
 Goal:
@@ -116,7 +330,7 @@ Proof:
 true
 Q.E.D.
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Lemma fib-fib2-induct
 
 Goal:
@@ -191,6 +405,11 @@ Proof 3:
           (implies (= n 3)
             (equal (fib2 n) (fib n))))
 
+Exportation:
+(implies (and (natp n)
+              (= n 3))
+         (equal (fib2 n) (fib n)))
+
 Context:
 C1. (natp n)
 C2. (= n 3)
@@ -223,27 +442,36 @@ Proof 4:
                           (equal (fib2 (- n 2)) (fib (- n 2)))))
               (equal (fib2 n) (fib n)))))
 
+Exportation:
+(implies (and (natp n)
+              (> n 3)
+              (equal (fib2 (- n 1)) (fib (- n 1))
+              (equal (fib2 (- n 2)) (fib (- n 2)))))
+         (equal (fib2 n) (fib n)))
+
 Context:
 C1. (natp n)
 C2. (> n 3)
 C3. (equal (fib2 (- n 1)) (fib (- n 1)))
 C4. (equal (fib2 (- n 2)) (fib (- n 2)))
 
-Proof:
+Derived Context:
+D1. (equal (+ (fib2 (- n 1)) (fib2 (- n 2))
+           (+ (fib-acc2 (- n 1) 0 1) (fib-acc2 (- n 2) 0 1))))
+
 Goal: 
 (equal (fib2 n) (fib n))
 
+Proof:
 (equal (fib2 n) (fib n))
-= { C2, if-axioms, def fib }
-(equal (fib2 n) (+ (fib (- n 1)) (fib (- n 2))))
-= { C3, C4 }
-(equal (fib2 n) (+ (fib2 (- n 1)) (fib2 (- n 2))))
-= { def fib, C2, if-axioms }
-(equal (fib-acc2 (1- n) 0 1)
-       (+ (fib-acc2 (1- (- n 1)) 0 1)
-          (fib-acc2 (1- (- n 2)) 0 1)))
-= { arith }
-????????????????????????
+= { C2, if-axioms, def fib2 }
+(equal (fib-acc2 (1- n) 0 1) (fib n))
+= { def fib-acc2, C2, if-axioms }
+(equal (fib-acc2 (1- (1- n)) 1 (+ 1 0)) (fib n))
+= { D1 }
+(equal (+ (fib (1- n)) (fib (1- (1- n)))) (fib n))
+= { def fib }
+true ; FIXME
 
 
 #|
