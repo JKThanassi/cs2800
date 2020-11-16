@@ -527,7 +527,7 @@ Q.E.D
 
 ;; Exportation
 (implies (and (natp c)
-              (not (zp c)))
+              (zp c))
          (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
                 (fib n)))
 
@@ -550,7 +550,7 @@ Q.E.D.
 ;; Proof 3
 ;; Conjecture
 (implies (natp c)
-         (implies (zp c)
+         (implies (not (zp c))
                   (implies (equal (fib-acc2 (1- c) (fib (1- (- n (1- c)))) (fib (- n (1- c))))
                                   (fib n))
                            (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
