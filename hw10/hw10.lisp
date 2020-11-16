@@ -465,21 +465,20 @@ Goal:
 Proof:
 (equal (fib2 n) (fib n))
 = { C2, if-axioms, def fib2 }
-;; No way to prove this with regular induction
-;; Can't really use inductive hypothesis b/c ans will become 1
 (equal (fib-acc2 (1- n) 0 1) (fib n))
-= { Lemma fib-acc2-fib, C2 }
-(equal (fib-acc2 (1- (1- n)) 1 (+ 1 0)) (fib n))
-= { D1 }
-(equal (+ (fib (1- n)) (fib (1- (1- n)))) (fib n))
-= { def fib }
+= { Lemma fib-acc2-fib, C2, D1 }
 true
+Q.E.D
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lemma fib-acc2-fib
 ;; Induction scheme: natural numbers, c < n
 
 ;; Proof Obligations
+
+;; Goal
+(equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+       (fib n))
 
 Obligation 1 (contract case)
 (implies (not (natp c))
@@ -509,9 +508,6 @@ Obligation 3 (inductive step)
 (implies (and (natp c) (not (natp c)))
          (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
                 (fib n)))
-;; Goal
-(equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
-                (fib n))
 
 ;; Context
 C1. (not (natp n))
@@ -589,7 +585,7 @@ D2. (= (+ (fib (1- (- n c))) (fib (- n c)))
           (fib (1- (- n c))) 
           (fib (- n c)))
 = { Def fib-acc 2, if-axioms, C2 }
-(fib-acc2 (1- c) 
+(fib-acc2 (1- c)
           (fib (- n c))
           (+ (fib (1- (- n c))) (fib (- n c))))
 = { D1, D2 }
