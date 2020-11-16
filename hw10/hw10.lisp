@@ -457,7 +457,7 @@ C4. (equal (fib2 (- n 2)) (fib (- n 2)))
 
 Derived Context:
 D1. (equal (+ (fib2 (- n 1)) (fib2 (- n 2))
-           (+ (fib-acc2 (- n 1) 0 1) (fib-acc2 (- n 2) 0 1))))
+           (+ (fib-acc2 (- n 1) 0 1) (fib-acc2 (- n 2) 0 1)))) { C3, C4, Arith }
 
 Goal:
 (equal (fib2 n) (fib n))
