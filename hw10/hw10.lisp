@@ -531,7 +531,7 @@ Q.E.D
 
 ;; Exportation
 (implies (and (natp c)
-              (zp c))
+              (not (zp c)))
          (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
                 (fib n)))
 
