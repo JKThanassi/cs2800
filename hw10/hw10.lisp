@@ -138,7 +138,7 @@ Q.E.D.
 (implies (natp n)
   (implies (> n 1)
     (implies (<= (fib (1- n)) (fact (1- n))))
-      (<= (fib n) (fact n)))))
+      (<= (fib n) (fact n))))
 
 Exportation:
 (implies (and (natp n)
@@ -159,7 +159,7 @@ Goal:
 (<= (fib n) (fact n))
 
 Proof:
-(<= (fib n) (fact n)))
+(<= (fib n) (fact n))
 = { def fib, def fact, C2 }
 (<= (+ (fib (1- n)) (fib (1- (1- n)))) (* n (fact (1- n))))
 = { C3 }
@@ -246,7 +246,7 @@ Goal:
 (<= (fib (1- n)) (fib n))
 
 Proof:
-(<= (fib (1- n)) (fib n)))
+(<= (fib (1- n)) (fib n))
 = { Def fib }
 (<= (fib (1- n)) (+ (fib (1- n)) (fib (1- (1- n)))))
 = { arith }
@@ -384,7 +384,7 @@ C1. (natp n)
 C2. (= n 2)
 
 Proof:
-(equal (fib2 n) (fib n)))
+(equal (fib2 n) (fib n))
 = { def fib, fib2 }
 (equal (+ (fib (1- n)) (fib (1- (1- n)))) (fib-acc2 (1- n) 0 1))
 = { C2 }
@@ -415,7 +415,7 @@ C1. (natp n)
 C2. (= n 3)
 
 Proof:
-(equal (fib2 n) (fib n)))
+(equal (fib2 n) (fib n))
 = { def fib2, fib }
 (equal (+ (fib (1- n)) (fib (1- (1- n)))) (fib-acc2 (1- n) 0 1))
 = { C2 }
@@ -494,7 +494,7 @@ Obligation 2 (base case c = 0)
 
 Obligation 3 (inductive step)
 (implies (natp c)
-         (implies (zp c)
+         (implies (not (zp c))
                   (implies (equal (fib-acc2 (1- c) (fib (1- (- n (1- c)))) (fib (- n (1- c))))
                                   (fib n))
                            (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
@@ -505,15 +505,20 @@ Obligation 3 (inductive step)
          (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
                 (fib n)))
 
+;; Contract completion
+(implies (and (natp c) (not (natp c)))
+         (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
+                (fib n)))
 ;; Goal
 (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
                 (fib n))
 
 ;; Context
 C1. (not (natp n))
+C2. (natp n)
 
 ;; Derived Context
-D1. nil { C1, def fib-acc2 }
+D1. nil { C1, C2 }
 
 Q.E.D
 
@@ -530,14 +535,13 @@ Q.E.D
          (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
                 (fib n)))
 
-;; Goal 
-(equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
-                (fib n))
-
 ;; Context
 C1. (natp c)
 C2. (zp c)
 
+;; Goal
+(equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
+                (fib n))
 ;; Proof
 (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
 = { C2 }
