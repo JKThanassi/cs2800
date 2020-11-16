@@ -459,20 +459,144 @@ Derived Context:
 D1. (equal (+ (fib2 (- n 1)) (fib2 (- n 2))
            (+ (fib-acc2 (- n 1) 0 1) (fib-acc2 (- n 2) 0 1))))
 
-Goal: 
+Goal:
 (equal (fib2 n) (fib n))
 
 Proof:
 (equal (fib2 n) (fib n))
 = { C2, if-axioms, def fib2 }
+;; No way to prove this with regular induction
+;; Can't really use inductive hypothesis b/c ans will become 1
 (equal (fib-acc2 (1- n) 0 1) (fib n))
-= { def fib-acc2, C2, if-axioms }
+= { Lemma fib-acc2-fib, C2 }
 (equal (fib-acc2 (1- (1- n)) 1 (+ 1 0)) (fib n))
 = { D1 }
 (equal (+ (fib (1- n)) (fib (1- (1- n)))) (fib n))
 = { def fib }
-true ; FIXME
+true
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Lemma fib-acc2-fib
+;; Induction scheme: natural numbers, c < n
+
+;; Proof Obligations
+
+Obligation 1 (contract case)
+(implies (not (natp c))
+         (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+                (fib n)))
+
+Obligation 2 (base case c = 0)
+(implies (natp c)
+         (implies (zp c)
+                  (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+                         (fib n))))
+
+Obligation 3 (inductive step)
+(implies (natp c)
+         (implies (zp c)
+                  (implies (equal (fib-acc2 (1- c) (fib (1- (- n (1- c)))) (fib (- n (1- c))))
+                                  (fib n))
+                           (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
+                                  (fib n)))))
+
+;; Proof 1:
+(implies (not (natp c))
+         (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+                (fib n)))
+
+;; Goal
+(equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+                (fib n))
+
+;; Context
+C1. (not (natp n))
+
+;; Derived Context
+D1. nil { C1, def fib-acc2 }
+
+Q.E.D
+
+;; Proof 2:
+;; Conjecture
+(implies (natp c)
+         (implies (zp c)
+                  (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+                         (fib n))))
+
+;; Exportation
+(implies (and (natp c)
+              (zp c))
+         (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+                (fib n)))
+
+;; Goal 
+(equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c))) 
+                (fib n))
+
+;; Context
+C1. (natp c)
+C2. (zp c)
+
+;; Proof
+(fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
+= { C2 }
+(fib (- n c))
+= { Arith, C2 }
+(fib n)
+true
+Q.E.D.
+
+;; Proof 3
+;; Conjecture
+(implies (natp c)
+         (implies (zp c)
+                  (implies (equal (fib-acc2 (1- c) (fib (1- (- n (1- c)))) (fib (- n (1- c))))
+                                  (fib n))
+                           (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
+                                  (fib n)))))
+;; Exportation
+(implies (and (natp c)
+              (not (zp c))
+              (equal (fib-acc2 (1- c) (fib (1- (- n (1- c)))) (fib (- n (1- c))))
+                     (fib n)))
+         (equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
+                (fib n)))
+
+;; Goal
+(equal (fib-acc2 c (fib (1- (- n c))) (fib (- n c)))
+       (fib n))
+
+;; Context
+C1. (natp c)
+C2. (not (zp c))
+C3. (equal (fib-acc2 (1- c) 
+                     (fib (1- (- n (1- c))))
+                     (fib (- n (1- c))))
+           (fib n))
+
+;; Derived Context
+D1. (= (- n c) (1- (- n (1- c)))) { Arith }
+D2. (= (+ (fib (1- (- n c))) (fib (- n c)))
+       (fib (- n (1- c)))) { Def fib }
+
+;; Proof
+(fib-acc2 c 
+          (fib (1- (- n c))) 
+          (fib (- n c)))
+= { Def fib-acc 2, if-axioms, C2 }
+(fib-acc2 (1- c) 
+          (fib (- n c))
+          (+ (fib (1- (- n c))) (fib (- n c))))
+= { D1, D2 }
+(fib-acc2 (1- c) 
+          (fib (1- (- n (1- c)))) 
+          (fib (- n (1- c))))
+= { C3 }
+(fib n)
+true
+Q.E.D.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #|
 
