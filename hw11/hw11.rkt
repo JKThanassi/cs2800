@@ -120,14 +120,15 @@ Because both oossible solutions are `cat, our only solution is `(cat).
               (== `(,fst ,fst . ,res) ls)
               (stuttero rst res))))))
 
-(define (assoco x ls)
-  (car (run 1 (q)
+;; `x` is the symbol we are looking up in the list `ls` and `g` is the goal clause
+(define (assoco x ls g)
     (fresh (fst rst)
       (== `(,fst . ,rst) ls)
       (fresh (a b)
         (== `(,a . ,b) fst)
-        (conde ((== a x) (== q fst))
-               ((== q (assoco x rst)))))))))
+        (conde ((== a x) (== g fst))
+        ;; need to explcitly state that we only want to recur if a is not equal to x so that we only return the first occurance of the association  
+               ((=/= a x) (assoco x rst g))))))
 
 (define (reverseo x ls) 
   (run* (q)
