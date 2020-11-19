@@ -111,21 +111,24 @@ Because both oossible solutions are `cat, our only solution is `(cat).
 
 |#
 
-(define stuttero
-(lambda (ls) (
-  (conde 
-    [ (== ls `()) '() ]
-    [ (fresh (fst rst)
-     (== `(,fst . ,rst) ls)
-     (cons fst (cons fst (stuttero rst)))
-     ) ]))))
+(define (stuttero q ls)
+   (conde
+    ((== q '())(== ls `()))
+    ((fresh (fst rst)
+            (== `(,fst . ,rst) q)
+            (fresh (res)
+              (== `(,fst ,fst . ,res) ls)
+              (stuttero rst res))))))
 
-(define (assoco x ls) 
-  (run* (q)
-    (== q 1) ;;TODO implement
-  
-  )
-)
+(define (assoco x ls)
+  (car (run 1 (q)
+    (fresh (fst rst)
+      (== `(,fst . ,rst) ls)
+      (fresh (a b)
+        (== `(,a . ,b) fst)
+        (conde ((== a x) (== q fst))
+               ((== q (assoco x rst)))))))))
+
 (define (reverseo x ls) 
   (run* (q)
     (== q 1) ;;TODO implement
