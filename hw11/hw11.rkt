@@ -29,11 +29,24 @@ from class.
   (== 'cat q)
   (conde
     [(conde 
-      [(== 'cat q)
-       (== 'horse q)])
+      [(== 'cat q) (== 'horse q)])
      (== 'cat q)]
     [(== q 'cat)]))
 
+'(cat)
+#|
+We know that the output of `run` is going to be a list, so we just need to evaluate the
+`conde` expression to populate the list. The first line, `(== 'cat q)`, introduces a goal that 
+unifies the value of `q` to 'cat, and it does so outside the conde expression. Inside the conde,
+the first expression is conjunctive between 'cat and 'horse, so q has no possible value. The 
+other expression allows q to be 'cat, so the conde overall sets q to 'cat. Then the outer conde 
+is evaluated, which allows only a value of 'cat for q.
+|#
+
+
+
+
+|#
 ;; 2 What is the value of
 
 (run 1 (q) 
@@ -42,17 +55,24 @@ from class.
     (absento 'tag q)
     (symbolo a)))
 
+'(((_.0 _.1) (=/= ((_.0 tag))) (sym _.0) (absento (tag _.1))))
+
 ;; 3 What do the following miniKanren constraints mean?
 
 ;; a. ==
+;; == Creates a goal which is a union of two values 
 
 ;; b. =/=
+;; Creates a goal which succeeds when e1 is not equal to e2
 
 ;; c. absento
+;; Ensures that a variable does not appear in a term
 
 ;; d. numbero
+;; Ensures that the variable is of a number type
 
 ;; e. symbolo
+;; Ensures that the variable is of a symbol type
 
 ;; Part II
 
