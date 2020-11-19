@@ -57,13 +57,13 @@ Because both oossible solutions are `cat, our only solution is `(cat).
 '(((_.0 _.1) (=/= ((_.0 tag))) (sym _.0) (absento (tag _.1))))
 #|
   This query is requiring that q is a list of two arbitrary values `a` and `b`. The first restriction
-  `absento` is requiring that the symbol tag is not present in either `a` or `b`. Secondly we are requiring that `a` is a symbol value.
-  So, to correctly create the list we can only have the values _.0 and _.1 where _.0 is not tag, _.0 is a symbol and _.1 is not tag.
+  `absento` is requiring that the symbol 'tag is not present in either `a` or `b`. Secondly we are requiring that `a` is a symbol value.
+  So, to correctly create the list we can only have the values _.0 (a) and _.1 (b) where _.0 (a) is a symbol that is not 'tag and _.1 does not contain 'tag.
 |#
 ;; 3 What do the following miniKanren constraints mean?
 
 ;; a. ==
-;; == Creates a goal which is a union of two values 
+;; Creates a goal which is a union of two values 
 
 ;; b. =/=
 ;; Creates a goal which succeeds when e1 is not equal to e2
@@ -111,7 +111,29 @@ Because both oossible solutions are `cat, our only solution is `(cat).
 
 |#
 
+(define stuttero
+(lambda (ls) (
+  (conde 
+    [ (== ls `()) '() ]
+    [ (fresh (fst rst)
+     (== `(,fst . ,rst) ls)
+     (cons fst (cons fst (stuttero rst)))
+     ) ]))))
+
+(define (assoco x ls) 
+  (run* (q)
+    (== q 1) ;;TODO implement
+  
+  )
+)
+(define (reverseo x ls) 
+  (run* (q)
+    (== q 1) ;;TODO implement
+  
+  )
+)
 ;; Take ''assoc'', ''reverse'', and ''stutter'', and translate them
+;; into the equivalent miniKanren relations (''assoco'', and
 ;; into the equivalent miniKanren relations (''assoco'', and
 ;; ''reverseo'', ''stuttero'') and put them here.
 
