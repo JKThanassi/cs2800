@@ -130,12 +130,24 @@ Because both oossible solutions are `cat, our only solution is `(cat).
         ;; need to explcitly state that we only want to recur if a is not equal to x so that we only return the first occurance of the association  
                ((=/= a x) (assoco x rst g))))))
 
-(define (reverseo x ls) 
-  (run* (q)
-    (== q 1) ;;TODO implement
-  
-  )
-)
+(define appendo
+  (lambda (l s out)
+    (conde
+      [(== '() l) (== s out)]
+      [(fresh (a d res)
+         (== `(,a . ,d) l)
+         (== `(,a . ,res) out)
+         (appendo d s res))])))
+
+(define (reverseo ls g) 
+  (conde 
+    [(== ls '())(== g `())]
+    [(fresh (fst rst out)
+      (== `(,fst . ,rst) ls)
+      (reverseo rst out)
+      (appendo out (list fst) g)
+  )]
+))
 ;; Take ''assoc'', ''reverse'', and ''stutter'', and translate them
 ;; into the equivalent miniKanren relations (''assoco'', and
 ;; into the equivalent miniKanren relations (''assoco'', and
