@@ -64,19 +64,22 @@
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
 
-(defdata btree (oneof (cons symbol symbol) 
-                      (cons btree symbol) 
-                      (cons symbol btree) 
-                      (cons btree btree)))
+;;(defdata btree (oneof (cons symbol symbol) 
+;;                      (cons btree symbol) 
+;;                      (cons symbol btree) 
+;;                      (cons btree btree)))
+
+(defdata btree (oneof symbol (cons btree btree)))
+(defdata branching-btree (cons btree btree))
 
 
-(btreep (cons 'cat 'fish)
+(branching-btreep (cons 'cat 'fish)
         )
 
-(btreep (cons (cons 'cat 'fish) 'turtle))
+(branching-btreep (cons (cons 'cat 'fish) 'turtle))
        
 
-(definec height (bt :btree) :nat
+(definec height (bt :branching-btree) :nat
   (cond 
     ((and (symbolp (car bt)) (symbolp (cdr bt))) 1)
     ((and (btreep (car bt)) (symbolp (cdr bt))) (+ 1 (height (car bt))))
@@ -94,28 +97,59 @@
  (definec app2 (x :tl y :tl) :tl
     (if (endp x)
         y
-      (cons (first x) (app2 (rest x) y))))#|ACL2s-ToDo-Line|#
+      (cons (first x) (app2 (rest x) y))))
 
 
-
-(definec flatten2 (bt :btree) :los 
+(definec flatten2 (bt :branching-btree) :los 
   (cond
     ((and (symbolp (car bt)) (symbolp (cdr bt))) (list (car bt) (cdr bt)))
     ((and (btreep (car bt)) (symbolp (cdr bt))) (app2 (flatten2 (car bt)) (list (cdr bt))))
     ((and (symbolp (car bt)) (btreep (cdr bt))) (cons (car bt) (flatten2 (cdr bt))))
     ((and (btreep (car bt)) (btreep (cdr bt)))  (app2 (flatten2 (car bt)) (flatten2 (cdr bt))))))
 
-(definec expt2 (n :nat m :nat) :nat
+(definec my-expt (n :nat m :nat) :nat
   (cond
     ((zp m) 1)
-    (t (* n (expt2 n (- m 1))))))
+    (t (* n (my-expt n (- m 1))))))
 
 (thm (implies (and (tlp a) (tlp b)) (equal (app a b) (app2 a b))))
-(thm (implies (and (natp a) (natp b)) (equal (expt a b) (expt2 a b))))
+(thm (implies (and (natp a) (natp b)) (equal (expt a b) (my-expt a b))))
+
+(defthm app2-assoc
+  (implies (and (tlp x) (tlp y) (tlp z))
+           (equal (app2 (app2 x y) z) (app2 x (app2 y z)))))
+
+(defthm my-expt-1
+  (implies (natp x) (equal (my-expt 1 x) 1)))
+
+(defthm len-of-app2
+  (implies (and (tlp x) (tlp y))
+        (equal (len (app2 x y))
+               (+ (len x) (len y)))))
+
+(defthm exponents-add-myexpta
+  (implies (and (natp r) (natp i) (natp j))
+  (equal (expt r (+ i j))
+                       (* (expt r i) (expt r j)))))
+
+(defthm distributivity-of-my-expt-over-*
+  (implies (and (natp a) (natp b) (natp i))
+        (equal (my-expt (* a b) i)
+               (* (my-expt a i) (my-expt b i)))))
+
+(defthm my-exp-1-1
+  (implies (natp r)
+        (equal (expt r 1) r)))#|ACL2s-ToDo-Line|#
+
+
+(defthm my-exp-multiply
+  (implies (and (natp r) (natp i) (natp j))
+                 (equal (my-expt (my-expt r i) j)
+                        (my-expt r (* i j)))))
 
 
 (defthm main
-  (implies (btreep bt) 
+  (implies (branching-btreep bt) 
            (<= (len (flatten2 bt)) 
-               (expt2 2 (height bt)))))
+               (my-expt 2 (height bt)))))
     
