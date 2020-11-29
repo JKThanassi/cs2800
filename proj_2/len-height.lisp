@@ -112,42 +112,65 @@
     ((zp m) 1)
     (t (* n (my-expt n (- m 1))))))
 
-(thm (implies (and (tlp a) (tlp b)) (equal (app a b) (app2 a b))))
-(thm (implies (and (natp a) (natp b)) (equal (expt a b) (my-expt a b))))
 
+;; This theorem is showing that app2 is associative. That is that itll produce the same result if called like (app2 (app2 x y) z) (app2 x (app2 y z))
 (defthm app2-assoc
   (implies (and (tlp x) (tlp y) (tlp z))
            (equal (app2 (app2 x y) z) (app2 x (app2 y z)))))
 
-(defthm my-expt-1
-  (implies (natp x) (equal (my-expt 1 x) 1)))
 
+;; This theorem is showing that the length of the appended list is the sum of the lengths of its arguments 
 (defthm len-of-app2
   (implies (and (tlp x) (tlp y))
         (equal (len (app2 x y))
                (+ (len x) (len y)))))
 
+;; This theorem is showing that my-expt follows the arithmetic property of exponents that r^(i+j) is the same as (r^i * r^j)
 (defthm exponents-add-myexpta
   (implies (and (natp r) (natp i) (natp j))
-  (equal (expt r (+ i j))
-                       (* (expt r i) (expt r j)))))
+  (equal (my-expt r (+ i j))
+                       (* (my-expt r i) (my-expt r j)))))
 
+
+;; This theorem is showing that my-expt follows the arithmetic property of exponents that exponents distribute over multiplication
 (defthm distributivity-of-my-expt-over-*
   (implies (and (natp a) (natp b) (natp i))
         (equal (my-expt (* a b) i)
                (* (my-expt a i) (my-expt b i)))))
 
+;; This theorem is showing that my-expt follows the arithmetic property that any base to the 1 power is itself
 (defthm my-exp-1-1
   (implies (natp r)
-        (equal (expt r 1) r)))#|ACL2s-ToDo-Line|#
+        (equal (my-expt r 1) r)))
 
+;; This shows that the my-expt function is weakly increasing (at least greater than or equal) for any base greater than 1
+(defthm my-expt-is-weakly-increasing-for-base->-1
+        (implies (and (< 1 r)
+                      (< i j)
+                      (natp r)
+                      (natp i)
+                      (natp j))
+                 (<= (my-expt r i) (my-expt r j))))
 
+;; NOT WORKING -- may need sub lemma
+(defthm my-expt-is-increasing-for-base->-1
+        (implies (and (< 1 r)
+                      (< i j)
+                      (natp r)
+                      (natp i)
+                      (natp j))
+                 (< (my-expt r i) (my-expt r j)))
+        )
+
+;; NOT WORKING -- may need sub lemma
 (defthm my-exp-multiply
   (implies (and (natp r) (natp i) (natp j))
                  (equal (my-expt (my-expt r i) j)
                         (my-expt r (* i j)))))
 
 
+;; Main theorem we are trying to prove
+;; The conjecture states that the length of a flattened binary tree is less than or equal to 2 raised to the power of the height of the tree.
 (defthm main
   (implies (branching-btreep bt) 
            (<= (len (flatten2 bt)) 
