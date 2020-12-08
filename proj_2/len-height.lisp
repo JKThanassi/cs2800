@@ -154,22 +154,27 @@
 ;                 (<= (my-expt r i) (my-expt r j))))
 (local (include-book "std/basic/inductions" :dir :system))
 
-(defthm my-expt-eq-expt (implies (and 
-                                  (natp n)
-                                  (natp m))
-                                  (= (my-expt n m) (expt n m))))
+;(defthm my-expt-eq-expt (implies (and 
+;                                  (natp n)
+;                                  (natp m))
+;                                  (= (my-expt n m) (expt n m))))
 
 (defthm test (implies (and
                (posp dif)
-               (natp i)
-               (natp j)
-               (posp r)
-               (not (zp i))
-               (< 1 r)
-               (< i j)
-               (equal dif (- j i)))
-          (< (my-expt r i) (my-expt r j)))
-          :hints (("Goal" :induct (acl2::dec-induct dif))))
+               (posp (- j dif))
+;               (natp i)
+               (posp j)
+;               (not (zp i))
+               (natp r)
+               (< 1 r))
+;               (< i j)
+;               (equal dif (- j i)))
+          (< (my-expt r (- j dif)) (my-expt r j)))
+                      )#|ACL2s-ToDo-Line|#
+
+          ;;:hints (("Goal" :induct (acl2::dec-induct dif)))))
+
+;if not a symbol than a btree is a branching btree -- add lemma?
 
 ;; NOT WORKING -- may need sub lemma
 ;(defthm my-expt-is-increasing-for-base->-1
@@ -196,6 +201,5 @@
 (defthm main
   (implies (branching-btreep bt) 
            (<= (len (flatten2 bt)) 
-               (my-expt 2 (height bt)))))#|ACL2s-ToDo-Line|#
-
+               (my-expt 2 (height bt)))))
     
