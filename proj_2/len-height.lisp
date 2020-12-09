@@ -142,64 +142,25 @@
 (defthm my-exp-1-1
   (implies (natp r)
         (equal (my-expt r 1) r)))
-(set-gag-mode nil)
 
-;; This shows that the my-expt function is weakly increasing (at least greater than or equal) for any base greater than 1
-;(defthm my-expt-is-weakly-increasing-for-base->-1
-;        (implies (and (< 1 r)
-;                      (< i j)
-;                      (natp r)
-;                      (natp i)
-;                      (natp j))
-;                 (<= (my-expt r i) (my-expt r j))))
-(local (include-book "std/basic/inductions" :dir :system))
 
-;(defthm my-expt-eq-expt (implies (and 
-;                                  (natp n)
-;                                  (natp m))
-;                                  (= (my-expt n m) (expt n m))))
-
-(defthm test (implies (and
+(defthm my-expt-increasing (implies (and
                (posp dif)
                (posp (- j dif))
-;               (natp i)
                (posp j)
-;               (not (zp i))
                (natp r)
                (< 1 r))
-;               (< i j)
-;               (equal dif (- j i)))
-          (< (my-expt r (- j dif)) (my-expt r j)))
-                      )#|ACL2s-ToDo-Line|#
+          (< (my-expt r (- j dif)) (my-expt r j))))
 
-          ;;:hints (("Goal" :induct (acl2::dec-induct dif)))))
-
-;if not a symbol than a btree is a branching btree -- add lemma?
-
-;; NOT WORKING -- may need sub lemma
-;(defthm my-expt-is-increasing-for-base->-1
-;        (implies (and (< 1 r)
-;                      (< i j)
-;                      (< 0 i)
-;                      (natp r)
-;                      (natp i)
-;                      (natp j))
-;                 (< (my-expt r i) (my-expt r j)))
-     ;   :hints (:functional-instance (:instance p-f (n r) (m i))
-      ;          (p natp) (f my-expt))
-;        )
-
-;; NOT WORKING -- may need sub lemma
-;(defthm my-exp-multiply
-;  (implies (and (natp r) (natp i) (natp j))
-;                 (equal (my-expt (my-expt r i) j)
-;                        (my-expt r (* i j)))))
-
-
+(defthm my-expt-eq-expt (implies (and 
+                                  (natp n)
+                                  (natp m))
+                                  (= (my-expt n m) (expt n m))))
 ;; Main theorem we are trying to prove
 ;; The conjecture states that the length of a flattened binary tree is less than or equal to 2 raised to the power of the height of the tree.
 (defthm main
   (implies (branching-btreep bt) 
            (<= (len (flatten2 bt)) 
-               (my-expt 2 (height bt)))))
+               (my-expt 2 (height bt)))))#|ACL2s-ToDo-Line|#
+
     
